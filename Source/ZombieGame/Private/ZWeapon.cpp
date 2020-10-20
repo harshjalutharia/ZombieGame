@@ -15,17 +15,23 @@
 // Sets default values
 AZWeapon::AZWeapon()
 {
- 	MeshComp = CreateDefaultSubobject<USkeletalMeshComponent>("MeshComp");
+	//RootComp = CreateDefaultSubobject<USceneComponent>("SceneComp");
+	//SetRootComponent(RootComp);
+
+	MeshComp = CreateDefaultSubobject<USkeletalMeshComponent>("MeshComp");
 	SetRootComponent(MeshComp);
+	//MeshComp->SetupAttachment(RootComponent);
 	
 	BoxComp = CreateDefaultSubobject<UBoxComponent>("BoxComp");
-	BoxComp->SetupAttachment(MeshComp);
+	BoxComp->SetupAttachment(RootComponent);
+	//SetRootComponent(BoxComp);
 
 	ReloadTimeWithoutAnimation = 2.f;
 	TimeBetweenShots = 0.5f;
 	LastFireTime = 0.f;
 	
 	MeshComp->SetCollisionProfileName(DROPPED_WEAPON_COLLISION);
+	//MeshComp->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 	MeshComp->SetSimulatePhysics(true);
 
 	SetReplicates(true);
@@ -82,7 +88,7 @@ void AZWeapon::ServerFiringEffects_Implementation()
 
 void AZWeapon::MultiFiringEffects_Implementation()
 {
-	if(OwnerPlayer && !OwnerPlayer->IsLocallyControlled())
+	if(OwnerPlayer!=nullptr && !OwnerPlayer->IsLocallyControlled())
 	{
 		PlayFiringEffects();
 	}
@@ -309,8 +315,8 @@ void AZWeapon::WeaponEquipped(APlayerCharacter* PC)
 	}
 
 	//MeshComp->SetCollisionProfileName("NoCollision");
-	MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	MeshComp->SetSimulatePhysics(false);
+	MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 
@@ -325,7 +331,7 @@ void AZWeapon::WeaponDropped()
 	}
 
 	//MeshComp->SetCollisionProfileName(DROPPED_WEAPON_COLLISION);
-	MeshComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	MeshComp->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 	MeshComp->SetSimulatePhysics(true);
 }
 
@@ -348,7 +354,7 @@ void AZWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetime
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(AZWeapon, bIsReloading, COND_OwnerOnly);
-	DOREPLIFETIME_CONDITION(AZWeapon, OwnerPlayer, COND_OwnerOnly);
+	DOREPLIFETIME(AZWeapon, OwnerPlayer);
 	DOREPLIFETIME(AZWeapon, bIsEquipped);
 	
 }

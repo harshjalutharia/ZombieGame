@@ -220,6 +220,7 @@ void APlayerCharacter::DropWeapon()
 		{
 			ServerDropWeapon();
 		}
+		
 		AZWeapon* WeaponInHand = WeaponsOnPlayer[ActiveWeaponIndex];
 		if(WeaponInHand->IsReloading())
 		{
@@ -233,7 +234,6 @@ void APlayerCharacter::DropWeapon()
 			WeaponInHand->DetachFromActor(DetachmentTransformRules);
 			WeaponInHand->WeaponDropped();
 		}
-		
 	}
 }
 

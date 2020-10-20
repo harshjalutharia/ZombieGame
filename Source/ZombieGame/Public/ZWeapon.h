@@ -80,6 +80,9 @@ protected:
 	*/
 
 	UPROPERTY(VisibleAnywhere, Category = "Components")
+	USceneComponent* RootComp;
+
+	UPROPERTY(VisibleAnywhere, Category = "Components")
 	class UBoxComponent* BoxComp;
 
 	UPROPERTY(VisibleAnywhere, Category = "Components")
@@ -159,16 +162,6 @@ protected:
 	void ServerUseAmmo(int32 ClientClipAmmo);
 	void ServerUseAmmo_Implementation(int32 ClientClipAmmo);
 	bool ServerUseAmmo_Validate(int32 ClientClipAmmo);
-
-	/*
-	 *MISC STUFF
-	 */
-
-	UFUNCTION(NetMulticast, Reliable)
-    void MultiEquipWeapon();
-
-	UFUNCTION(NetMulticast, Reliable)
-	void MultiDropWeapon();
 
 public:
 
