@@ -270,18 +270,6 @@ bool AZWeapon::ServerUseAmmo_Validate(int32 ClientClipAmmo)
 }
 
 
-void AZWeapon::MultiEquipWeapon_Implementation()
-{
-	WeaponEquipped(nullptr);
-}
-
-
-void AZWeapon::MultiDropWeapon_Implementation()
-{
-	WeaponDropped();
-}
-
-
 void AZWeapon::InterruptReload()
 {
 	if(!bIsReloading)
