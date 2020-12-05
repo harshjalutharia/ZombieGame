@@ -4,9 +4,9 @@
 #include "ZombieGame/Public/PlayerCharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
-#include "ZWeapon.h"
 #include "ZHealthComponent.h"
 #include "Net/UnrealNetwork.h"
+
 
 // Sets default values
 APlayerCharacter::APlayerCharacter(const class FObjectInitializer& ObjectInitializer) :
@@ -44,8 +44,10 @@ APlayerCharacter::APlayerCharacter(const class FObjectInitializer& ObjectInitial
 	}
 
 	ActiveWeaponSocketName = TEXT("WeaponHand");
-	NumberOfWeaponSlots = 3;
-	ActiveWeaponIndex = NO_ACTIVE_WEAPON;
+	ReserveWeaponSlot1SocketName = TEXT("ReserveWeaponOne");
+	ReserveWeaponSlot2SocketName = TEXT("ReserveWeaponTwo");
+
+	InteractionRange = 300.f;
 }
 
 // Called when the game starts or when spawned
@@ -55,22 +57,40 @@ void APlayerCharacter::BeginPlay()
 	
 	if(HasAuthority())
 	{
-		if(!bSpawnWithWeapon || !SpawnWithWeaponClass)
-			return;
-
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Instigator = this;
-		SpawnParams.Owner = this;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		
-		AZWeapon* NewWeapon = GetWorld()->SpawnActor<AZWeapon>(SpawnWithWeaponClass,FVector::ZeroVector,FRotator::ZeroRotator,SpawnParams);
-		if(NewWeapon)
+		if(bSpawnWithWeapon && SpawnWithWeaponClass)
 		{
-			WeaponsOnPlayer.Add(NewWeapon);
-			ActiveWeaponIndex=0;
-			
-			NewWeapon->WeaponEquipped(this);
-			NewWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, ActiveWeaponSocketName);
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Instigator = this;
+			SpawnParams.Owner = this;
+			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+			AZWeapon* NewWeapon = GetWorld()->SpawnActor<AZWeapon>(SpawnWithWeaponClass,FVector::ZeroVector,FRotator::ZeroRotator,SpawnParams);
+			if(NewWeapon)
+			{
+				AssignWeaponToSlot(NewWeapon, EInventorySlot::Weapon1);
+				NewWeapon->SetEquipped(true);
+				NewWeapon->WeaponPickedUp(this,EInventorySlot::Weapon1);
+				ActiveWeapon = NewWeapon;
+				NewWeapon->AttachWeaponToAssignedSlotOrHand(true);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Weapon Spawn for %s failed"), *GetName())
+				ActiveWeapon = nullptr;
+			}
+				
+			/*AZWeapon* NewWeapon2 = GetWorld()->SpawnActor<AZWeapon>(SpawnWithWeaponClass,FVector::ZeroVector,FRotator::ZeroRotator,SpawnParams);
+			if(NewWeapon2)
+			{
+				AssignWeaponToSlot(NewWeapon2, EInventorySlot::Weapon2);
+				NewWeapon2->WeaponPickedUp(this, EInventorySlot::Weapon2);
+			}*/
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Weapon Class used for spawning default weapon not specified in blueprint."))
+			ActiveWeapon = nullptr;
 		}
 	}
 }
@@ -82,7 +102,47 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 	if(IsLocallyControlled() || HasAuthority())
 		SetLookPitch();
-	
+
+	/*
+	if(IsLocallyControlled())
+	{
+		const auto ActorBeingLookedAt = GetActorInView();
+
+		
+		if(ActorBeingLookedAt)
+		{
+			AZInteractableActor* InteractableActor = Cast<AZInteractableActor>(ActorBeingLookedAt);
+			
+			if(InteractableActor)
+			{
+				if(FocusedActor)
+				{
+					if(FocusedActor!=InteractableActor)
+					{
+						FocusedActor->StopHighlightingActor();
+						InteractableActor->StartHighlightingActor();
+						FocusedActor=InteractableActor;
+					}
+				}
+				else
+				{
+					InteractableActor->StartHighlightingActor();
+					FocusedActor=InteractableActor;
+				}
+			}
+			else if(FocusedActor)
+			{
+				FocusedActor->StopHighlightingActor();
+				FocusedActor=nullptr;
+			}			
+		}
+		else if(FocusedActor)
+		{
+			FocusedActor->StopHighlightingActor();
+			FocusedActor=nullptr;
+		}
+	}
+	*/
 }
 
 // Called to bind functionality to input
@@ -111,13 +171,10 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	PlayerInputComponent->BindAction("Reload",IE_Pressed, this, &APlayerCharacter::RequestReload);
 
-	PlayerInputComponent->BindAction("DropWeapon",IE_Pressed, this, &APlayerCharacter::DropWeapon);
-
 	PlayerInputComponent->BindAction("LastWeapon",IE_Pressed, this, &APlayerCharacter::QuickSwitchWeapon);
 
 	PlayerInputComponent->BindAction("WeaponSlot1",IE_Pressed, this, &APlayerCharacter::UseWeaponSlot1);
 	PlayerInputComponent->BindAction("WeaponSlot2",IE_Pressed, this, &APlayerCharacter::UseWeaponSlot2);
-	PlayerInputComponent->BindAction("WeaponSlot3",IE_Pressed, this, &APlayerCharacter::UseWeaponSlot3);
 
 	PlayerInputComponent->BindAction("Interact",IE_Pressed, this, &APlayerCharacter::Interact);
 }
@@ -126,7 +183,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 bool APlayerCharacter::IsSprinting() const
 {
 	// Ensure that changes made here are also made in Tick function of UPlayerCharacterMovementComponent
-	return (!bIsAiming && !bIsCrouched && !bIsReloading && bWantsToSprint && 
+	return (!bIsAiming && !bIsCrouched && ActiveWeaponState==EWeaponState::Idle && bWantsToSprint && 
 		(FVector::DotProduct(GetVelocity().GetSafeNormal2D(), GetActorForwardVector().GetSafeNormal2D()) > 0.8));
 }
 
@@ -169,13 +226,15 @@ void APlayerCharacter::StopSprinting()
 
 void APlayerCharacter::StartAiming()
 {
-	SetAiming(true);
+	if(HoldingWeapon())
+		SetAiming(true);
 }
 
 
 void APlayerCharacter::StopAiming()
 {
-	SetAiming(false);
+	if(HoldingWeapon())
+		SetAiming(false);
 }
 
 
@@ -187,80 +246,109 @@ void APlayerCharacter::RequestJump()
 
 void APlayerCharacter::StartFiring()
 {
-	if(WeaponsOnPlayer[ActiveWeaponIndex])
+	bWantsToFire = true;
+	if(ActiveWeapon)
 	{
-		WeaponsOnPlayer[ActiveWeaponIndex]->StartFiring();
+		ActiveWeapon->StartFiring();
 	}
 }
 
 
 void APlayerCharacter::StopFiring()
 {
-	if(WeaponsOnPlayer[ActiveWeaponIndex])
+	bWantsToFire = false;
+	if(ActiveWeapon)
 	{
-		WeaponsOnPlayer[ActiveWeaponIndex]->StopFiring();
+		ActiveWeapon->StopFiring();
 	}
 }
 
 
 void APlayerCharacter::RequestReload()
 {
-	if(WeaponsOnPlayer[ActiveWeaponIndex])
+	if(ActiveWeapon)
 	{
-		WeaponsOnPlayer[ActiveWeaponIndex]->ReloadWeapon();
-	}
-}
-
-
-void APlayerCharacter::DropWeapon()
-{
-	if(ActiveWeaponIndex != NO_ACTIVE_WEAPON)
-	{
-		if(!HasAuthority())
-		{
-			ServerDropWeapon();
-		}
-		
-		AZWeapon* WeaponInHand = WeaponsOnPlayer[ActiveWeaponIndex];
-		if(WeaponInHand->IsReloading())
-		{
-			WeaponInHand->InterruptReload();
-		}
-
-		if(HasAuthority())
-		{
-			const FDetachmentTransformRules DetachmentTransformRules(EDetachmentRule::KeepWorld,EDetachmentRule::KeepWorld,EDetachmentRule::KeepWorld,false);
-			
-			WeaponInHand->DetachFromActor(DetachmentTransformRules);
-			WeaponInHand->WeaponDropped();
-		}
+		ActiveWeapon->ReloadWeapon();
 	}
 }
 
 
 void APlayerCharacter::QuickSwitchWeapon()
 {
+	
 }
 
 
 void APlayerCharacter::UseWeaponSlot1()
 {
-	
+	if(WeaponSlot1 != nullptr && !bWantsToFire && ActiveWeapon!=WeaponSlot1)
+	{
+		if(ActiveWeapon->IsReloading())
+		{
+			ActiveWeapon->InterruptReload();
+		}
+		ServerSwitchWeapon(WeaponSlot1);
+	}
 }
 
 
 void APlayerCharacter::UseWeaponSlot2()
 {
-}
-
-
-void APlayerCharacter::UseWeaponSlot3()
-{
+	if(WeaponSlot2 != nullptr && !bWantsToFire && ActiveWeapon!=WeaponSlot2)
+	{
+		if(ActiveWeapon->IsReloading())
+		{
+			ActiveWeapon->InterruptReload();
+		}
+		ServerSwitchWeapon(WeaponSlot2);
+	}
 }
 
 
 void APlayerCharacter::Interact()
 {
+	if(ActiveWeaponState != EWeaponState::Idle && ActiveWeaponState != EWeaponState::Reloading)
+		return;
+	
+	AActor* ActorBeingLookedAt = GetActorInView();
+
+	if(ActorBeingLookedAt)
+	{
+		AZWeapon* Actor = Cast<AZWeapon>(ActorBeingLookedAt);
+
+		if(Actor)
+		{
+			//UE_LOG(LogTemp, Warning, TEXT("Local, Actor valid"));
+			Actor->Interact(this);
+		}
+		//else
+			//UE_LOG(LogTemp, Warning, TEXT("Interact failed"));
+	}
+}
+
+
+AActor* APlayerCharacter::GetActorInView() const
+{
+	FVector CameraLocation;
+	FRotator CameraRotation;
+
+	GetController()->GetPlayerViewPoint(CameraLocation, CameraRotation);
+
+	const FVector StartLineTrace = CameraLocation;
+	const FVector EndLineTrace = CameraLocation + CameraRotation.Vector() * InteractionRange;
+	
+	FHitResult OutHit;
+
+	if(GetWorld()->LineTraceSingleByChannel(OutHit,StartLineTrace,EndLineTrace,ECC_Visibility))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("Local, Interaction: Hit %s"),*OutHit.GetActor()->GetName());
+		return OutHit.GetActor();
+	}
+	else
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("Local, Interaction: No Hit"));
+		return nullptr;
+	}
 }
 
 
@@ -395,18 +483,86 @@ bool APlayerCharacter::ServerSetJumping_Validate(bool NewJumping, bool IsIdleJum
 }
 
 
-void APlayerCharacter::ServerDropWeapon_Implementation()
+void APlayerCharacter::ServerSwitchWeapon_Implementation(AZWeapon* NewActiveWeapon)
 {
-	DropWeapon();
+	LastWeaponInHand = ActiveWeapon;
+	ActiveWeapon=NewActiveWeapon;
+	ActiveWeapon->PullOutWeapon();
 }
 
 
-bool APlayerCharacter::ServerDropWeapon_Validate()
+bool APlayerCharacter::ServerSwitchWeapon_Validate(AZWeapon* NewActiveWeapon)
 {
-	if(ActiveWeaponIndex == NO_ACTIVE_WEAPON)
-		return false;
-
 	return true;
+}
+
+
+AZWeapon* APlayerCharacter::GetActiveWeapon() const
+{
+	return ActiveWeapon;
+}
+
+
+void APlayerCharacter::OnRep_ActiveWeapon()
+{
+	if(LastWeaponInHand!=nullptr)
+	{
+		// Switch weapons
+		ActiveWeapon->PullOutWeapon();
+	}
+	else
+	{
+		// Only triggered when character spawns
+		ActiveWeapon->AttachWeaponToAssignedSlotOrHand(true);
+	}
+}
+
+
+EInventorySlot APlayerCharacter::GetFirstEmptyWeaponSlot() const
+{
+	if(WeaponSlot1 == nullptr)
+		return EInventorySlot::Weapon1;
+	if(WeaponSlot2 == nullptr)
+		return EInventorySlot::Weapon2;
+	
+	return EInventorySlot::INVALID_SLOT;
+}
+
+
+FName APlayerCharacter::GetAttachPointOfSlot(EInventorySlot Slot) const
+{
+	if(Slot == EInventorySlot::Weapon1)
+		return ReserveWeaponSlot1SocketName;
+	
+	if (Slot == EInventorySlot::Weapon2)
+		return ReserveWeaponSlot2SocketName;
+	
+	return "";
+}
+
+
+void APlayerCharacter::AssignWeaponToSlot(AZWeapon* WeaponToAssign, EInventorySlot Slot)
+{
+	if(!HasAuthority())
+		return;
+	
+	if(Slot == EInventorySlot::Weapon1)
+	{
+		WeaponSlot1=WeaponToAssign;
+	}
+	else if (Slot == EInventorySlot::Weapon2)
+	{
+		WeaponSlot2=WeaponToAssign;
+	}
+}
+
+
+void APlayerCharacter::ClearWeaponSlot(EInventorySlot WeaponSlotIndex)
+{
+	if(WeaponSlotIndex==EInventorySlot::Weapon1)
+		WeaponSlot1=nullptr;
+	else if(WeaponSlotIndex==EInventorySlot::Weapon2)
+		WeaponSlot2=nullptr;
 }
 
 
@@ -421,10 +577,83 @@ void APlayerCharacter::OnMovementModeChanged(EMovementMode PrevMovementMode, uin
 }
 
 
-void APlayerCharacter::SetReloading(bool Reloading)
+void APlayerCharacter::AddWeaponToInventory(AZWeapon* NewWeapon, EInventorySlot EmptySlot)
 {
-	bIsReloading = Reloading;
-	MoveComp->SetReloading(Reloading);
+	if(!HasAuthority())
+	{
+		ServerAddWeaponToInventory(NewWeapon, EmptySlot);
+	}
+	else
+	{
+		if(EmptySlot == EInventorySlot::INVALID_SLOT)
+		{
+			if(ActiveWeapon->IsReloading())
+			{
+				ActiveWeapon->InterruptReload();
+			}
+			
+			const EInventorySlot NewSlot = ActiveWeapon->GetInventorySlot();
+			ActiveWeapon->WeaponDropped();
+			ClearWeaponSlot(NewSlot);
+			
+			AssignWeaponToSlot(NewWeapon, NewSlot);
+			NewWeapon->SetEquipped(true);
+			NewWeapon->WeaponPickedUp(this, NewSlot);
+
+			LastWeaponInHand = nullptr;
+			ActiveWeapon = NewWeapon;
+		}
+
+		else
+		{
+			AssignWeaponToSlot(NewWeapon, EmptySlot);
+			NewWeapon->SetEquipped(false);
+			NewWeapon->WeaponPickedUp(this, EmptySlot);
+
+			if(bAutoSwitchNewWeapon)
+			{
+				LastWeaponInHand = ActiveWeapon;
+				ActiveWeapon = NewWeapon;
+				ActiveWeapon->PullOutWeapon();
+			}
+		}
+	}
+}
+
+
+void APlayerCharacter::ServerAddWeaponToInventory_Implementation(AZWeapon* NewWeapon, EInventorySlot EmptySlot)
+{
+	AddWeaponToInventory(NewWeapon, EmptySlot);
+}
+
+
+bool APlayerCharacter::ServerAddWeaponToInventory_Validate(AZWeapon* NewWeapon, EInventorySlot EmptySlot)
+{
+	return true;
+}
+
+
+void APlayerCharacter::TryPickupWeapon(AZWeapon* NewWeapon)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Local, Player pickup weapon called"));
+	const EInventorySlot EmptySlot = GetFirstEmptyWeaponSlot();
+	if(EmptySlot == EInventorySlot::INVALID_SLOT)
+	{
+		if(ActiveWeapon->IsReloading())
+		{
+			ActiveWeapon->InterruptReload();
+		}
+	}
+
+	AddWeaponToInventory(NewWeapon, EmptySlot);
+		//UE_LOG(LogTemp, Warning, TEXT("Pickup Weapon: %s"),*NewWeapon->GetName());
+}
+
+
+void APlayerCharacter::SetActiveWeaponState(EWeaponState NewWeaponState)
+{
+	ActiveWeaponState = NewWeaponState;
+	MoveComp->SetActiveWeaponState(NewWeaponState);
 }
 
 
@@ -437,6 +666,8 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME_CONDITION(APlayerCharacter, bWantsToSprint, COND_SkipOwner);
 	DOREPLIFETIME_CONDITION(APlayerCharacter, bIsJumping, COND_SkipOwner);
 	DOREPLIFETIME_CONDITION(APlayerCharacter, bIdleJump, COND_SkipOwner);
-	DOREPLIFETIME(APlayerCharacter, ActiveWeaponIndex);
-	DOREPLIFETIME(APlayerCharacter, WeaponsOnPlayer);
+	DOREPLIFETIME(APlayerCharacter, WeaponSlot1);
+	DOREPLIFETIME(APlayerCharacter, WeaponSlot2);
+	DOREPLIFETIME(APlayerCharacter, ActiveWeapon);
+	DOREPLIFETIME(APlayerCharacter, LastWeaponInHand);
 }

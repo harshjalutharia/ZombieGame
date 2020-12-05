@@ -33,9 +33,6 @@ void AZWeapon_HitScan::FireWeapon()
 	if(!PC)
 		return;
 
-	LastFireTime = GetWorld()->GetTimeSeconds();
-	UseAmmo();
-
 	FVector CameraLocation;
 	FRotator CameraRotation;
 	
@@ -123,7 +120,7 @@ void AZWeapon_HitScan::ServerNotifyHit_Implementation(FHitResult HitResult, FVec
 {
 	if(OwnerPlayer && (HitResult.bBlockingHit || HitResult.GetActor()))
 	{
-		if(!bIsReloading)
+		if(WeaponState!=EWeaponState::Reloading)
 		{
 			// Check dot between view and shot direction
 			if(HitDirectionAcceptable(HitResult.Location))
@@ -293,7 +290,8 @@ void AZWeapon_HitScan::PlayTrailEffects(FVector ImpactLocation)
 	{
 		if(ShotCount % TracerRoundInterval == 0)
 		{
-			UGameplayStatics::SpawnEmitterAtLocation(this,TracerEffect,MuzzleLocation,(ImpactLocation-MuzzleLocation).Rotation());
+			auto Trail=UGameplayStatics::SpawnEmitterAtLocation(this,TracerEffect,MuzzleLocation,(ImpactLocation-MuzzleLocation).Rotation());
+			
 		}
 	}
 }

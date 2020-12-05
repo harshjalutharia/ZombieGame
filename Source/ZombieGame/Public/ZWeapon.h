@@ -3,12 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+
+#include "ZInteractableActor.h"
+#include "ZombieGame/ZEnums.h"
 #include "ZWeapon.generated.h"
 
 
 UCLASS()
-class ZOMBIEGAME_API AZWeapon : public AActor
+class ZOMBIEGAME_API AZWeapon : public AZInteractableActor
 {
 	GENERATED_BODY()
 	
@@ -20,8 +22,14 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing=OnRep_OwnerPlayer)
 	class APlayerCharacter* OwnerPlayer;
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_WeaponState)
+	EWeaponState WeaponState;
+
+	UPROPERTY(Replicated)//Using=OnRep_SlotAssignedToWeapon)
+	EInventorySlot SlotAssignedToWeapon;
 
 	/*
 	WEAPON CONFIGURATION
@@ -46,6 +54,9 @@ protected:
 	float ReloadTimeWithoutAnimation;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
+	float WeaponSwitchTimeWithoutAnimation;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
 	FName MuzzleSocketName;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
@@ -56,6 +67,15 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
 	UAnimMontage* ReloadAnim;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
+	UAnimMontage* WeaponSwitchAnim;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
+	UAnimMontage* WeaponMesh_FireAnim;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
+	UAnimMontage* WeaponMesh_ReloadAnim;
 
 	UPROPERTY(EditDefaultsOnly, Category ="Weapon VFX")
 	UParticleSystem* MuzzleEffect;
@@ -69,11 +89,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon VFX")
 	TSubclassOf<UCameraShake> FireCameraShake;
 
-	UPROPERTY(ReplicatedUsing=OnRep_IsEquipped)
-	bool bIsEquipped;
-
-	UFUNCTION()
-	void OnRep_IsEquipped();
+	// Firing Sound
 
 	/*
 	COMPONENTS
@@ -91,6 +107,13 @@ protected:
 	/*
 	FIRING STUFF
 	*/
+
+private:
+
+	bool CanFire() const { return (OwnerPlayer && (WeaponState==EWeaponState::Idle || WeaponState==EWeaponState::Firing) && CurrentClipAmmo>0); }
+	bool CanReload() const { return (OwnerPlayer && WeaponState==EWeaponState::Idle && CurrentClipAmmo!=MaxClipAmmo && CurrentReserveAmmo!=0); }
+	
+protected:
 
 	bool bWantsToFire;
 	
@@ -134,16 +157,15 @@ protected:
 	void ReloadComplete();
 
 	float PlayReloadAnimation() const;
-
 	void StopReloadAnimation() const;
 
 	UFUNCTION(NetMulticast, Reliable)
-    void MultiPlayReloadEffects();
-	void MultiPlayReloadEffects_Implementation();
+    void MultiPlayReloadAnimation();
+	void MultiPlayReloadAnimation_Implementation();
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MultiStopReloadEffects();
-	void MultiStopReloadEffects_Implementation();
+	void MultiStopReloadAnimation();
+	void MultiStopReloadAnimation_Implementation();
 	
 	FTimerHandle ReloadTimerHandle;
 
@@ -152,9 +174,6 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Weapon Info")
 	int32 CurrentClipAmmo;
-
-	UPROPERTY(Replicated)
-	bool bIsReloading;
 
 	void UseAmmo();
 
@@ -165,15 +184,71 @@ protected:
 
 public:
 
-	void InterruptReload();
+	bool IsReloading() const { return WeaponState==EWeaponState::Reloading; }
 
-	void WeaponEquipped(class APlayerCharacter* PC);
-	void WeaponDropped();
-	
-	bool IsReloading() const { return bIsReloading; }
+	void InterruptReload();
 
 	int32 GetCurrentClipAmmo() const { return CurrentClipAmmo; }
 	int32 GetCurrentReserveAmmo() const { return CurrentReserveAmmo; }
 	int32 GetMaxClipAmmo() const { return MaxClipAmmo; }
 	int32 GetMaxReserveAmmo() const { return MaxReserveAmmo; }
+
+	/*
+	PICKUP AND DROP
+	*/
+
+	EInventorySlot GetInventorySlot() const { return SlotAssignedToWeapon; }
+
+	bool IsEquipping() const { return WeaponState==EWeaponState::Equipping; }
+
+	void WeaponPickedUp(class APlayerCharacter* PC, EInventorySlot SlotAssigned);
+	void WeaponDropped();
+
+	void PullOutWeapon();
+
+	UFUNCTION(BlueprintCallable)
+	void SwapWeaponsDuringAnimation();
+
+	void AttachWeaponToAssignedSlotOrHand(bool bAttachToHand);
+
+	virtual void Interact(APlayerCharacter* PlayerInteracted) override;
+
+	void SetEquipped(bool bNewEquipped) { bIsEquipped = bNewEquipped; }
+
+protected:
+
+	UPROPERTY(Replicated)
+	bool bIsEquipped;
+
+	UFUNCTION()
+	void EquipComplete();
+
+	float PlayWeaponSwitchAnimation() const;
+	void StopWeaponSwitchAnimation() const;
+
+	UFUNCTION(NetMulticast, Reliable)
+    void MultiPlayWeaponSwitchAnimation();
+	void MultiPlayWeaponSwitchAnimation_Implementation();
+
+	UFUNCTION(NetMulticast, Reliable)
+    void MultiStopWeaponSwitchAnimation();
+	void MultiStopWeaponSwitchAnimation_Implementation();
+
+	FTimerHandle WeaponEquippingTimer;
+
+	UFUNCTION()
+	void OnRep_OwnerPlayer();
+
+	/*UFUNCTION()
+	void OnRep_SlotAssignedToWeapon();*/
+
+	void SetWeaponState(EWeaponState NewWeaponState);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerToggleFiringWeaponState(bool IsFiring);
+	void ServerToggleFiringWeaponState_Implementation(bool IsFiring);
+	bool ServerToggleFiringWeaponState_Validate(bool IsFiring);
+
+	UFUNCTION()
+	void OnRep_WeaponState();
 };

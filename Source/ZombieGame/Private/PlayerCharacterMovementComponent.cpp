@@ -39,7 +39,7 @@ void UPlayerCharacterMovementComponent::TickComponent(float DeltaTime, ELevelTic
 			WantsToAimWalk = false;
 		}
 
-		if (SprintKeyDown && !IsCrouching() && !WantsToAimWalk && !IsReloading)
+		if (SprintKeyDown && !IsCrouching() && !WantsToAimWalk && ActiveWeaponState==EWeaponState::Idle)
 		{
 			APawn* Player = GetPawnOwner();
 			const FVector PlayerVelocity = Player->GetVelocity().GetSafeNormal2D();
@@ -93,24 +93,6 @@ float UPlayerCharacterMovementComponent::GetMaxSpeed() const
 	default:
         return 0.f;
 	}
-}
-
-
-void UPlayerCharacterMovementComponent::SetSprinting(bool Sprinting)
-{
-	SprintKeyDown = Sprinting;
-}
-
-
-void UPlayerCharacterMovementComponent::SetAiming(bool AimWalking)
-{
-	AimKeyDown = AimWalking;
-}
-
-
-void UPlayerCharacterMovementComponent::SetReloading(bool Reloading)
-{
-	IsReloading = Reloading;
 }
 
 

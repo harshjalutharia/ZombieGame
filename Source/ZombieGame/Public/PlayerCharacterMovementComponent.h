@@ -3,9 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "UObject/ObjectMacros.h"
 
+#include "GameFramework/CharacterMovementComponent.h"
+#include "ZombieGame/ZEnums.h"
 #include "PlayerCharacterMovementComponent.generated.h"
 
 /**
@@ -44,7 +44,7 @@ private:
 	bool SprintKeyDown = false;
 	bool AimKeyDown = false;
 	
-	bool IsReloading = false;
+	EWeaponState ActiveWeaponState = EWeaponState::Idle;
 
 public:
 
@@ -54,11 +54,11 @@ public:
 	
 	virtual float GetMaxSpeed() const override;
 
-	void SetSprinting(bool Sprinting);
+	void SetSprinting(bool Sprinting) { SprintKeyDown = Sprinting; }
 	
-	void SetAiming(bool AimWalking);
+	void SetAiming(bool AimWalking) { AimKeyDown = AimWalking; }
 
-	void SetReloading(bool Reloading); 
+	void SetActiveWeaponState(EWeaponState NewWeaponState) { ActiveWeaponState = NewWeaponState; }
 
 	/*
 	Following two functions can be deleted if not being used in AnimBP

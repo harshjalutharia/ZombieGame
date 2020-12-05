@@ -3,16 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
-#include "PlayerCharacter.generated.h"
 
-#define NO_ACTIVE_WEAPON -1
+#include "GameFramework/Character.h"
+#include "ZWeapon.h"
+#include "ZombieGame/ZEnums.h"
+#include "PlayerCharacter.generated.h"
 
 class UCameraComponent;
 class USpringArmComponent;
 class UPlayerCharacterMovementComponent;
 class UZHealthComponent;
 class AZWeapon;
+
 
 UCLASS()
 class ZOMBIEGAME_API APlayerCharacter : public ACharacter
@@ -35,6 +37,7 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	UCameraComponent* CameraComp;
 
+	UPROPERTY()
 	UPlayerCharacterMovementComponent* MoveComp;
 
 	UPROPERTY(VisibleAnywhere, Category = "Components")
@@ -63,15 +66,23 @@ private:
 
 	void RequestReload();
 
-	void DropWeapon();
-
 	void QuickSwitchWeapon();
 
 	void UseWeaponSlot1();
 	void UseWeaponSlot2();
-	void UseWeaponSlot3();
 
 	void Interact();
+
+	/*
+	INTERACTION
+	 */
+
+	UPROPERTY(EditDefaultsOnly, Category = "Configuration")
+	float InteractionRange;
+
+	//class AZInteractableActor* FocusedActor;
+
+	AActor* GetActorInView() const;
 	
 	/*
 	MOVEMENT STUFF
@@ -87,6 +98,8 @@ private:
 
 	UPROPERTY(Replicated)
 	bool bWantsToSprint;
+
+	bool bWantsToFire;
 
 	UPROPERTY(Replicated)
 	bool bIsJumping;
@@ -119,26 +132,32 @@ private:
 	*/
 
 	UFUNCTION(Server, Reliable, WithValidation)
-    void ServerDropWeapon();
-	void ServerDropWeapon_Implementation();
-	bool ServerDropWeapon_Validate();
+    void ServerSwitchWeapon(AZWeapon* NewActiveWeapon);
+	void ServerSwitchWeapon_Implementation(AZWeapon* NewActiveWeapon);
+	bool ServerSwitchWeapon_Validate(AZWeapon* NewActiveWeapon);
 
+	UPROPERTY(Replicated)
+	AZWeapon* WeaponSlot1;
+
+	UPROPERTY(Replicated)
+	AZWeapon* WeaponSlot2;
+
+	UPROPERTY(ReplicatedUsing = OnRep_ActiveWeapon)
+	AZWeapon* ActiveWeapon;
+
+	UPROPERTY(Replicated)
+	AZWeapon* LastWeaponInHand;
+	
 	// Socket in Player Mesh where Weapon being held in hand will be attached
 	UPROPERTY(EditDefaultsOnly, Category = "Weapons")
 	FName ActiveWeaponSocketName;
 
 	//Socket in Player Mesh where Weapon in reserve will be attached
 	UPROPERTY(EditDefaultsOnly, Category = "Weapons")
-	FName ReserveWeaponSocketName;
-	
-	UPROPERTY(Replicated)
-	int8 ActiveWeaponIndex;
-	
-	UPROPERTY(Replicated)
-	TArray<AZWeapon*> WeaponsOnPlayer;
+	FName ReserveWeaponSlot1SocketName;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapons")
-	uint8 NumberOfWeaponSlots;
+	FName ReserveWeaponSlot2SocketName;
 
 	UPROPERTY(EditAnywhere, Category = "Weapons")
 	bool bSpawnWithWeapon;
@@ -146,8 +165,45 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Weapons")
 	TSubclassOf<AZWeapon> SpawnWithWeaponClass;
 
-	bool bIsReloading;
+	UPROPERTY(EditDefaultsOnly, Category = "Weapons")
+	bool bAutoSwitchNewWeapon;
 
+	EWeaponState ActiveWeaponState;
+
+	UFUNCTION()
+	void OnRep_ActiveWeapon();
+	
+	EInventorySlot GetFirstEmptyWeaponSlot() const;
+
+	void ClearWeaponSlot(EInventorySlot WeaponSlotIndex);
+
+	void AddWeaponToInventory(AZWeapon* NewWeapon, EInventorySlot EmptySlot);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+    void ServerAddWeaponToInventory(AZWeapon* NewWeapon, EInventorySlot EmptySlot);
+	void ServerAddWeaponToInventory_Implementation(AZWeapon* NewWeapon, EInventorySlot EmptySlot);
+	bool ServerAddWeaponToInventory_Validate(AZWeapon* NewWeapon, EInventorySlot EmptySlot);
+
+	void AssignWeaponToSlot(AZWeapon* WeaponToAssign, EInventorySlot Slot);
+
+	UFUNCTION(BlueprintCallable)
+    bool HoldingWeapon() const { return (ActiveWeapon != nullptr); }
+
+public:
+	
+	FName GetAttachPointOfSlot(EInventorySlot Slot) const;
+	FName GetHandAttachPoint() const { return ActiveWeaponSocketName; }
+
+	UFUNCTION(BlueprintCallable)
+	AZWeapon* GetActiveWeapon() const;
+	AZWeapon* GetLastWeaponInHand() const { return LastWeaponInHand; }
+
+	void TryPickupWeapon(AZWeapon* NewWeapon);
+
+	void SetActiveWeaponState(EWeaponState NewWeaponState);
+	
+	bool CanFire() const { return !IsJumping(); }
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -160,9 +216,6 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode) override;
-
-	void SetReloading(bool Reloading);
-	bool IsReloading() const { return bIsReloading; }
 
 	UFUNCTION(BlueprintCallable)
 	float GetLookPitch() const { return LookPitch; }
@@ -177,7 +230,5 @@ public:
 
 	UCameraComponent* GetCameraComponent() const { return CameraComp; }
 	UZHealthComponent* GetHealthComponent() const { return HealthComp; }
-
-	int8 GetActiveWeaponIndex() const { return ActiveWeaponIndex; }
-	TArray<AZWeapon*> GetWeaponsOnPlayer() const { return WeaponsOnPlayer; }
+	
 };

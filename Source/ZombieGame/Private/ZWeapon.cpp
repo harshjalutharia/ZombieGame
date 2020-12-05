@@ -3,8 +3,8 @@
 
 #include "ZWeapon.h"
 #include "Components/BoxComponent.h"
-#include "Net/UnrealNetwork.h"
 #include "PlayerCharacter.h"
+#include "Net/UnrealNetwork.h"
 #include "ZPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -15,23 +15,17 @@
 // Sets default values
 AZWeapon::AZWeapon()
 {
-	//RootComp = CreateDefaultSubobject<USceneComponent>("SceneComp");
-	//SetRootComponent(RootComp);
-
 	MeshComp = CreateDefaultSubobject<USkeletalMeshComponent>("MeshComp");
 	SetRootComponent(MeshComp);
-	//MeshComp->SetupAttachment(RootComponent);
 	
 	BoxComp = CreateDefaultSubobject<UBoxComponent>("BoxComp");
 	BoxComp->SetupAttachment(RootComponent);
-	//SetRootComponent(BoxComp);
 
 	ReloadTimeWithoutAnimation = 2.f;
 	TimeBetweenShots = 0.5f;
 	LastFireTime = 0.f;
 	
 	MeshComp->SetCollisionProfileName(DROPPED_WEAPON_COLLISION);
-	//MeshComp->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 	MeshComp->SetSimulatePhysics(true);
 
 	SetReplicates(true);
@@ -44,12 +38,13 @@ void AZWeapon::BeginPlay()
 
 	CurrentClipAmmo = MaxClipAmmo;
 	CurrentReserveAmmo = MaxReserveAmmo;
+	SetWeaponState(EWeaponState::Idle);
 }
 
 
 void AZWeapon::PlayFiringEffects() const
 {
-	if(!OwnerPlayer)
+	if(!OwnerPlayer || (HasAuthority() && GetNetMode()==NM_DedicatedServer))
 		return;
 	
 	if(OwnerPlayer->IsAiming() && FireAnim_Aiming)
@@ -97,10 +92,19 @@ void AZWeapon::MultiFiringEffects_Implementation()
 
 void AZWeapon::HandleFiring()
 {
-	if(OwnerPlayer && !OwnerPlayer->IsJumping() && !OwnerPlayer->IsSprinting())
+	if(OwnerPlayer && OwnerPlayer->CanFire())
 	{
-		if(!bIsReloading && CurrentClipAmmo>0)
+		if(CanFire())
 		{
+			if(WeaponState != EWeaponState::Firing)
+			{
+				SetWeaponState(EWeaponState::Firing);
+				ServerToggleFiringWeaponState(true);
+			}
+
+			UseAmmo();
+			LastFireTime = GetWorld()->GetTimeSeconds();
+			
 			FireWeapon();
 			ServerFiringEffects();
 			
@@ -131,6 +135,12 @@ void AZWeapon::StopFiring()
 	bWantsToFire = false;
 	GetWorldTimerManager().ClearTimer(FiringTimerHandle);
 
+	if(WeaponState==EWeaponState::Firing)
+	{
+		SetWeaponState(EWeaponState::Idle);
+		ServerToggleFiringWeaponState(false);
+	}
+
 	if(CurrentClipAmmo==0 && CurrentReserveAmmo > 0)
 	{
 		ReloadWeapon();
@@ -140,11 +150,10 @@ void AZWeapon::StopFiring()
 
 void AZWeapon::ReloadWeapon()
 {
-	if(bIsReloading || CurrentClipAmmo==MaxClipAmmo || CurrentReserveAmmo==0 || bWantsToFire || !OwnerPlayer)
+	if(!CanReload())
 		return;
 
-	bIsReloading = true;
-	OwnerPlayer->SetReloading(true);
+	SetWeaponState(EWeaponState::Reloading);
 
 	const float Duration = PlayReloadAnimation();
 
@@ -152,11 +161,11 @@ void AZWeapon::ReloadWeapon()
 
 	if(!HasAuthority())
 	{
-		ServerReloadWeapon(CurrentClipAmmo,CurrentReserveAmmo);
+		ServerReloadWeapon(CurrentClipAmmo, CurrentReserveAmmo);
 	}
 	else
 	{
-		MultiPlayReloadEffects();
+		MultiPlayReloadAnimation();
 	}
 }
 
@@ -169,7 +178,7 @@ void AZWeapon::ServerReloadWeapon_Implementation(int32 ClientClipAmmo, int32 Cli
 
 bool AZWeapon::ServerReloadWeapon_Validate(int32 ClientClipAmmo, int32 ClientReserveAmmo)
 {
-	if(CurrentClipAmmo != ClientClipAmmo || CurrentReserveAmmo != ClientReserveAmmo)
+	if(ClientReserveAmmo==0 || ClientClipAmmo>CurrentClipAmmo || ClientReserveAmmo>CurrentReserveAmmo)
 		return false;
 	return true;
 }
@@ -177,8 +186,7 @@ bool AZWeapon::ServerReloadWeapon_Validate(int32 ClientClipAmmo, int32 ClientRes
 
 void AZWeapon::ReloadComplete()
 {
-	bIsReloading = false;
-	OwnerPlayer->SetReloading(false);
+	SetWeaponState(EWeaponState::Idle);
 
 	const int32 BulletsUsed = MaxClipAmmo-CurrentClipAmmo;
 
@@ -192,8 +200,7 @@ void AZWeapon::ReloadComplete()
 		CurrentClipAmmo=MaxClipAmmo;
 		CurrentReserveAmmo-=BulletsUsed;
 	}
-
-	UE_LOG(LogTemp, Warning, TEXT("Local Ammo: %s / %s"),*FString::FromInt(CurrentClipAmmo),*FString::FromInt(CurrentReserveAmmo));
+	//UE_LOG(LogTemp, Warning, TEXT("Local Ammo: %s / %s"),*FString::FromInt(CurrentClipAmmo),*FString::FromInt(CurrentReserveAmmo));
 }
 
 
@@ -206,7 +213,14 @@ float AZWeapon::PlayReloadAnimation() const
 	
 	if(ReloadAnim)
 	{
-		Duration = OwnerPlayer->PlayAnimMontage(ReloadAnim);
+		if(HasAuthority() && GetNetMode()==NM_DedicatedServer)
+		{
+			Duration = ReloadAnim->GetPlayLength();
+		}
+		else
+		{
+			Duration = OwnerPlayer->PlayAnimMontage(ReloadAnim);
+		}
 	}
 
 	return Duration;
@@ -217,14 +231,14 @@ void AZWeapon::StopReloadAnimation() const
 	if(!OwnerPlayer)
 		return;
 
-	if(ReloadAnim)
+	if(ReloadAnim && !(HasAuthority() && GetNetMode()==NM_DedicatedServer))
 	{
 		OwnerPlayer->StopAnimMontage(ReloadAnim);		
 	}
 }
 
 
-void AZWeapon::MultiPlayReloadEffects_Implementation()
+void AZWeapon::MultiPlayReloadAnimation_Implementation()
 {
 	if(OwnerPlayer && OwnerPlayer->GetLocalRole()==ROLE_SimulatedProxy)
 	{
@@ -232,7 +246,7 @@ void AZWeapon::MultiPlayReloadEffects_Implementation()
 	}
 }
 
-void AZWeapon::MultiStopReloadEffects_Implementation()
+void AZWeapon::MultiStopReloadAnimation_Implementation()
 {
 	if(OwnerPlayer && OwnerPlayer->GetLocalRole()==ROLE_SimulatedProxy)
 	{
@@ -243,12 +257,12 @@ void AZWeapon::MultiStopReloadEffects_Implementation()
 
 void AZWeapon::UseAmmo()
 {
-	CurrentClipAmmo--;
-	
 	if(!HasAuthority())
 	{
 		ServerUseAmmo(CurrentClipAmmo);
 	}
+	
+	CurrentClipAmmo--;
 }
 
 
@@ -260,11 +274,7 @@ void AZWeapon::ServerUseAmmo_Implementation(int32 ClientClipAmmo)
 
 bool AZWeapon::ServerUseAmmo_Validate(int32 ClientClipAmmo)
 {
-	if(ClientClipAmmo < 0 || CurrentClipAmmo<=0)
-		return false;
-	if(ClientClipAmmo != CurrentClipAmmo-1)
-		return false;
-	if(bIsReloading)
+	if(ClientClipAmmo < 0 || ClientClipAmmo>CurrentClipAmmo)
 		return false;
 	return true;
 }
@@ -272,39 +282,55 @@ bool AZWeapon::ServerUseAmmo_Validate(int32 ClientClipAmmo)
 
 void AZWeapon::InterruptReload()
 {
-	if(!bIsReloading)
+	if(WeaponState != EWeaponState::Reloading)
 		return;
 
 	GetWorldTimerManager().ClearTimer(ReloadTimerHandle);
 
-	bIsReloading = false;
-	OwnerPlayer->SetReloading(false);
+	SetWeaponState(EWeaponState::Idle);
 
-	if(GetNetMode()!=NM_DedicatedServer)
+	if(!HasAuthority() || GetNetMode()!=NM_DedicatedServer)
 	{
 		StopReloadAnimation();
 	}
 	
 	if(HasAuthority())
 	{
-		MultiStopReloadEffects();
+		MultiStopReloadAnimation();
 	}
 }
 
 
-void AZWeapon::WeaponEquipped(APlayerCharacter* PC)
+void AZWeapon::WeaponPickedUp(APlayerCharacter* PC, EInventorySlot SlotAssigned)
 {
+	if(!PC)
+		return;
+
 	if(HasAuthority())
 	{
-		SetInstigator(PC);
 		OwnerPlayer = PC;
-		SetReplicateMovement(false);
-		bIsEquipped = true;
+		SlotAssignedToWeapon = SlotAssigned;
+		SetInstigator(OwnerPlayer);
 	}
-
-	//MeshComp->SetCollisionProfileName("NoCollision");
+	
+	SetOwner(OwnerPlayer);
+	
 	MeshComp->SetSimulatePhysics(false);
 	MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	if(bIsEquipped)
+	{
+		AttachWeaponToAssignedSlotOrHand(true);
+		
+		if(OwnerPlayer->IsLocallyControlled())
+			if(CurrentClipAmmo==0 && CurrentReserveAmmo > 0)
+				ReloadWeapon();
+	}
+	else
+		AttachWeaponToAssignedSlotOrHand(false);
+	//EquipComplete();
+	//const float Duration = PlayPickupAnimation();
+	//GetWorldTimerManager().SetTimer(WeaponEquippingTimer,this, &AZWeapon::EquipComplete, Duration, false, Duration);
 }
 
 
@@ -312,23 +338,146 @@ void AZWeapon::WeaponDropped()
 {
 	if(HasAuthority())
 	{
-		SetInstigator(nullptr);
 		OwnerPlayer = nullptr;
-		SetReplicateMovement(true);
+		SlotAssignedToWeapon = EInventorySlot::INVALID_SLOT;
+		SetInstigator(nullptr);
 		bIsEquipped = false;
 	}
 
-	//MeshComp->SetCollisionProfileName(DROPPED_WEAPON_COLLISION);
-	MeshComp->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+	SetOwner(nullptr);
+
+	const FDetachmentTransformRules DetachmentTransformRules(EDetachmentRule::KeepWorld,EDetachmentRule::KeepWorld,EDetachmentRule::KeepWorld,false);
+	this->DetachFromActor(DetachmentTransformRules);
+	
+	MeshComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	MeshComp->SetSimulatePhysics(true);
 }
 
 
-void AZWeapon::OnRep_IsEquipped()
+void AZWeapon::PullOutWeapon()
 {
-	if(bIsEquipped)
+	AZWeapon* WeaponInHand = OwnerPlayer->GetLastWeaponInHand();
+
+	if(WeaponInHand->IsReloading())
 	{
-		WeaponEquipped(nullptr);
+		WeaponInHand->InterruptReload();
+	}
+	
+	float Duration = PlayWeaponSwitchAnimation();
+
+	if(OwnerPlayer->IsLocallyControlled() || HasAuthority())
+	{
+		SetWeaponState(EWeaponState::Equipping);
+	
+		GetWorldTimerManager().SetTimer(WeaponEquippingTimer, this, &AZWeapon::EquipComplete,Duration,false,Duration);
+	}
+}
+
+
+void AZWeapon::SwapWeaponsDuringAnimation()
+{
+	AZWeapon* WeaponInHand = OwnerPlayer->GetLastWeaponInHand();
+
+	if(!WeaponInHand)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("LastWeapon in PlayerCharacter not found by %s weapon"), *GetName())
+		return;
+	}
+
+	const FDetachmentTransformRules DetachmentTransformRules(EDetachmentRule::KeepWorld,EDetachmentRule::KeepWorld,EDetachmentRule::KeepWorld,false);
+	
+	WeaponInHand->DetachFromActor(DetachmentTransformRules);
+	this->DetachFromActor(DetachmentTransformRules);
+
+	WeaponInHand->AttachWeaponToAssignedSlotOrHand(false);
+	this->AttachWeaponToAssignedSlotOrHand(true);
+}
+
+
+void AZWeapon::EquipComplete()
+{
+	SetWeaponState(EWeaponState::Idle);
+
+	if(CurrentClipAmmo==0 && CurrentReserveAmmo > 0)
+	{
+		if(OwnerPlayer && OwnerPlayer->IsLocallyControlled())
+		{
+			ReloadWeapon();
+		}
+	}
+}
+
+
+void AZWeapon::AttachWeaponToAssignedSlotOrHand(bool bAttachToHand)
+{
+	if(OwnerPlayer)
+	{
+		if(bAttachToHand)
+			AttachToComponent(OwnerPlayer->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, OwnerPlayer->GetHandAttachPoint());
+		else
+			AttachToComponent(OwnerPlayer->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, OwnerPlayer->GetAttachPointOfSlot(SlotAssignedToWeapon));
+	}
+}
+
+
+float AZWeapon::PlayWeaponSwitchAnimation() const
+{
+	if(!OwnerPlayer)
+		return 0.f;
+
+	float Duration = WeaponSwitchTimeWithoutAnimation;
+	
+	if(WeaponSwitchAnim)
+	{
+		if(GetNetMode()!=NM_DedicatedServer || !HasAuthority())
+		{
+			Duration = OwnerPlayer->PlayAnimMontage(WeaponSwitchAnim);
+		}
+		else
+		{
+			Duration = WeaponSwitchAnim->GetPlayLength();
+		}
+	}
+
+	return Duration;
+}
+
+
+void AZWeapon::StopWeaponSwitchAnimation() const
+{
+	if(!OwnerPlayer)
+		return;
+
+	if(WeaponSwitchAnim && !(HasAuthority() && GetNetMode()==NM_DedicatedServer))
+	{
+		OwnerPlayer->StopAnimMontage(WeaponSwitchAnim);
+	}
+}
+
+
+void AZWeapon::MultiPlayWeaponSwitchAnimation_Implementation()
+{
+	if(OwnerPlayer && OwnerPlayer->GetLocalRole()==ROLE_SimulatedProxy)
+	{
+		PlayWeaponSwitchAnimation();
+	}
+}
+
+
+void AZWeapon::MultiStopWeaponSwitchAnimation_Implementation()
+{
+	if(OwnerPlayer && OwnerPlayer->GetLocalRole()==ROLE_SimulatedProxy)
+	{
+		StopWeaponSwitchAnimation();
+	}
+}
+
+
+void AZWeapon::OnRep_OwnerPlayer()
+{
+	if(OwnerPlayer!=nullptr)
+	{
+		WeaponPickedUp(OwnerPlayer, SlotAssignedToWeapon);
 	}
 	else
 	{
@@ -337,12 +486,71 @@ void AZWeapon::OnRep_IsEquipped()
 }
 
 
+void AZWeapon::SetWeaponState(EWeaponState NewWeaponState)
+{
+	WeaponState = NewWeaponState;
+	if(OwnerPlayer)
+	{
+		OwnerPlayer->SetActiveWeaponState(NewWeaponState);
+	}
+}
+
+
+void AZWeapon::ServerToggleFiringWeaponState_Implementation(bool IsFiring)
+{
+	if(IsFiring)
+		WeaponState = EWeaponState::Firing;
+	else
+		WeaponState = EWeaponState::Idle;
+}
+
+
+bool AZWeapon::ServerToggleFiringWeaponState_Validate(bool IsFiring)
+{
+	return true;
+}
+
+
+void AZWeapon::OnRep_WeaponState()
+{
+	if(OwnerPlayer)
+		OwnerPlayer->SetActiveWeaponState(WeaponState);
+}
+
+
+/*void AZWeapon::OnRep_SlotAssignedToWeapon()
+{
+	if(OwnerPlayer->GetActiveWeaponIndex()==EInventorySlot::Hands)
+	{
+		AttachToComponent(OwnerPlayer->GetMesh(),FAttachmentTransformRules::SnapToTargetNotIncludingScale,OwnerPlayer->GetAttachPointOfSlot(EInventorySlot::Hands));
+		OwnerPlayer->SetActiveWeaponIndex(SlotAssignedToWeapon);
+	}
+	else
+	{
+		AttachToComponent(OwnerPlayer->GetMesh(),FAttachmentTransformRules::SnapToTargetNotIncludingScale,OwnerPlayer->GetAttachPointOfSlot(SlotAssignedToWeapon));
+	}
+}*/
+
+
+void AZWeapon::Interact(APlayerCharacter* PlayerInteracted)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Local, Weapon interact called"));
+	if(OwnerPlayer)
+		return;
+	
+	if(PlayerInteracted)
+	{
+		PlayerInteracted->TryPickupWeapon(this);
+	}
+}
+
+
 void AZWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME_CONDITION(AZWeapon, bIsReloading, COND_OwnerOnly);
 	DOREPLIFETIME(AZWeapon, OwnerPlayer);
+	DOREPLIFETIME(AZWeapon, SlotAssignedToWeapon);
 	DOREPLIFETIME(AZWeapon, bIsEquipped);
-	
+	DOREPLIFETIME_CONDITION(AZWeapon, WeaponState, COND_SkipOwner);
 }

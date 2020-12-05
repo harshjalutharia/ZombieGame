@@ -49,17 +49,16 @@ void UPlayerUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 		HealthBar->SetPercent(HealthComp->GetHealth()/MaxHealth);
 	}
 
-	const TArray<AZWeapon*> WeaponsOnPlayer = OwnerPlayer->GetWeaponsOnPlayer();
-	const int8 ActiveWeaponIndex = OwnerPlayer->GetActiveWeaponIndex();
+	const AZWeapon* ActiveWeapon = OwnerPlayer->GetActiveWeapon();
 
-	if(ActiveWeaponIndex != -1)
+	if(ActiveWeapon != nullptr)
 	{
 		ClipAmmoText->SetVisibility(ESlateVisibility::Visible);
 		ReserveAmmoText->SetVisibility(ESlateVisibility::Visible);
 		AmmoDivider->SetVisibility(ESlateVisibility::Visible);
 			
-		ClipAmmoText->SetText(FText::FromString(FString::FromInt(WeaponsOnPlayer[ActiveWeaponIndex]->GetCurrentClipAmmo())));
-		ReserveAmmoText->SetText(FText::FromString(FString::FromInt(WeaponsOnPlayer[ActiveWeaponIndex]->GetCurrentReserveAmmo())));
+		ClipAmmoText->SetText(FText::FromString(FString::FromInt(ActiveWeapon->GetCurrentClipAmmo())));
+		ReserveAmmoText->SetText(FText::FromString(FString::FromInt(ActiveWeapon->GetCurrentReserveAmmo())));
 	}
 	else
 	{
@@ -68,6 +67,5 @@ void UPlayerUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 		AmmoDivider->SetVisibility(ESlateVisibility::Hidden);
 	}
 
-	
 	Super::NativeTick(MyGeometry, InDeltaTime);
 }
