@@ -9,6 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
+#include "Curves/CurveFloat.h"
 
 
 AZWeapon_HitScan::AZWeapon_HitScan()
@@ -38,7 +39,7 @@ void AZWeapon_HitScan::FireWeapon()
 	
 	PC->GetPlayerViewPoint(CameraLocation, CameraRotation);
 
-	const FVector CameraTraceStartLocation = CameraLocation + CameraRotation.Vector() * (FVector::DotProduct((GetActorLocation() - CameraLocation),CameraRotation.Vector()));
+	const FVector CameraTraceStartLocation = CameraLocation + CameraRotation.Vector() * (FVector::DotProduct((GetMuzzleLocation() - CameraLocation),CameraRotation.Vector()));
 	const FVector CameraTraceEndLocation = CameraLocation + CameraRotation.Vector() * WeaponRange;
 
 	FHitResult HitResult;
@@ -46,7 +47,7 @@ void AZWeapon_HitScan::FireWeapon()
 		
 	if(PreHit)
 	{
-		const FVector BulletStartLocation = MeshComp->GetSocketLocation(MuzzleSocketName);
+		const FVector BulletStartLocation = GetMuzzleLocation();
 		const FVector BulletEndLocation = HitResult.Location + CameraRotation.Vector();
 		PerformWeaponTrace(HitResult, BulletStartLocation, BulletEndLocation); 
 	}
@@ -59,7 +60,7 @@ void AZWeapon_HitScan::FireWeapon()
 						//DrawDebugLine(GetWorld(), BulletStartLocation, BulletHitResult.Location, FColor::Red, false,2.f,0.f,1.f);
 						//UE_LOG(LogTemp, Warning, TEXT("Local, Bullet: No Hit"));
 						//DrawDebugLine(GetWorld(), BulletStartLocation, BulletEndLocation, FColor::Red, false,2.f,0.f,1.f);
-	ProcessInstantHit(HitResult, (HitResult.Location - MeshComp->GetSocketLocation(MuzzleSocketName)).GetSafeNormal());
+	ProcessInstantHit(HitResult, (HitResult.Location - GetMuzzleLocation()).GetSafeNormal());
 }
 
 
@@ -200,7 +201,7 @@ void AZWeapon_HitScan::ServerNotifyMiss_Implementation(FVector_NetQuantizeNormal
 	if(OwnerPlayer)
 	{
 		HitScanImpactNotify.BurstCounter+=1;
-		HitScanImpactNotify.ImpactLocation = MeshComp->GetSocketLocation(MuzzleSocketName) + (ShotDirection * WeaponRange);
+		HitScanImpactNotify.ImpactLocation = GetMuzzleLocation() + (ShotDirection * WeaponRange);
 	}
 }
 
@@ -221,7 +222,7 @@ bool AZWeapon_HitScan::PerformWeaponTrace(FHitResult& HitResult, FVector TraceSt
 
 bool AZWeapon_HitScan::HitDirectionAcceptable(FVector& ShotEndLocation) const
 {
-	const FVector MuzzleLocation = MeshComp->GetSocketLocation(MuzzleSocketName);
+	const FVector MuzzleLocation = GetMuzzleLocation();
 	const FVector ViewDir = (ShotEndLocation - MuzzleLocation).GetSafeNormal();
 	const float ViewDotShotDir = FVector::DotProduct(GetInstigator()->GetViewRotation().Vector(),ViewDir);
 
@@ -234,7 +235,7 @@ bool AZWeapon_HitScan::HitDirectionAcceptable(FVector& ShotEndLocation) const
 
 void AZWeapon_HitScan::SimulateWeaponFire(FVector ImpactLocation)
 {
-	const FVector MuzzleLocation = MeshComp->GetSocketLocation(MuzzleSocketName);
+	const FVector MuzzleLocation = GetMuzzleLocation();
 
 	FHitResult SimulatedHitResult;
 
@@ -269,7 +270,7 @@ void AZWeapon_HitScan::PlayImpactEffects(FVector ImpactLocation, EPhysicalSurfac
 	}
 	if(EffectToPlay)
 	{
-		FVector ShotDirection = ImpactLocation - MeshComp->GetSocketLocation(MuzzleSocketName);
+		FVector ShotDirection = ImpactLocation - GetMuzzleLocation();
 		ShotDirection.Normalize();
 		UGameplayStatics::SpawnEmitterAtLocation(this,EffectToPlay,ImpactLocation,ShotDirection.Rotation());
 	}
@@ -283,7 +284,7 @@ void AZWeapon_HitScan::PlayTrailEffects(FVector ImpactLocation)
 	
 	ShotCount++;
 		
-	const FVector MuzzleLocation = MeshComp->GetSocketLocation(MuzzleSocketName);
+	const FVector MuzzleLocation = GetMuzzleLocation();
 	const float ShotDistance = (ImpactLocation - MuzzleLocation).Size();
 	
 	if(ShotDistance > MinimumDistanceToSpawnTracer)
@@ -291,7 +292,7 @@ void AZWeapon_HitScan::PlayTrailEffects(FVector ImpactLocation)
 		if(ShotCount % TracerRoundInterval == 0)
 		{
 			auto Trail=UGameplayStatics::SpawnEmitterAtLocation(this,TracerEffect,MuzzleLocation,(ImpactLocation-MuzzleLocation).Rotation());
-			
+
 		}
 	}
 }

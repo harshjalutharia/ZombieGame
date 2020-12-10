@@ -35,7 +35,7 @@ protected:
 	WEAPON CONFIGURATION
 	*/
 
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon Damage")
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
 	float DamagePerShot;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
@@ -72,24 +72,28 @@ protected:
 	UAnimMontage* WeaponSwitchAnim;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
-	UAnimMontage* WeaponMesh_FireAnim;
+	UAnimationAsset* WeaponMesh_FireAnim;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
-	UAnimMontage* WeaponMesh_ReloadAnim;
+	UAnimationAsset* WeaponMesh_ReloadAnim;
 
-	UPROPERTY(EditDefaultsOnly, Category ="Weapon VFX")
+	UPROPERTY(EditDefaultsOnly, Category ="Weapon Info")
 	UParticleSystem* MuzzleEffect;
-
-	UPROPERTY(EditDefaultsOnly, Category ="Weapon VFX")
-	UParticleSystem* DefaultImpactEffect;
-
-	UPROPERTY(EditDefaultsOnly, Category ="Weapon VFX")
-	UParticleSystem* BloodImpactEffect;
 	
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon VFX")
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
 	TSubclassOf<UCameraShake> FireCameraShake;
 
-	// Firing Sound
+	UPROPERTY(EditDefaultsOnly, Category ="Weapon Info")
+	USoundBase* FiringSound;
+	
+	UPROPERTY(EditDefaultsOnly, Category ="Weapon Info")
+	USoundBase* ReloadSound;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
+	bool bUseCustomCrosshair;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info", meta = (EditCondition = "bUseCustomCrosshair"))
+	UTexture* CrosshairImage;
 
 	/*
 	COMPONENTS
@@ -141,6 +145,9 @@ public:
 
 	void StopFiring();
 
+	FVector GetMuzzleLocation() const { return MeshComp->GetSocketLocation(MuzzleSocketName); }
+	FRotator GetMuzzleRotation() const { return MeshComp->GetSocketRotation(MuzzleSocketName); }
+
 	/*
 	RELOADING STUFF
 	*/
@@ -156,16 +163,19 @@ protected:
 
 	void ReloadComplete();
 
-	float PlayReloadAnimation() const;
-	void StopReloadAnimation() const;
+	float PlayReloadEffects();
+	void StopReloadEffects() const;
 
 	UFUNCTION(NetMulticast, Reliable)
-    void MultiPlayReloadAnimation();
-	void MultiPlayReloadAnimation_Implementation();
+    void MultiPlayReloadEffects();
+	void MultiPlayReloadEffects_Implementation();
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MultiStopReloadAnimation();
-	void MultiStopReloadAnimation_Implementation();
+	void MultiStopReloadEffects();
+	void MultiStopReloadEffects_Implementation();
+
+	UPROPERTY()
+	UAudioComponent* ReloadSoundBeingPlayed;
 	
 	FTimerHandle ReloadTimerHandle;
 
@@ -251,4 +261,12 @@ protected:
 
 	UFUNCTION()
 	void OnRep_WeaponState();
+
+	/*
+	MISCELLANEOUS STUFF
+	*/
+
+public:
+
+	UTexture* GetCustomCrosshairIfApplicable() const;
 };

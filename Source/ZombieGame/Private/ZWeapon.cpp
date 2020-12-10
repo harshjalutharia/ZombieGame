@@ -7,6 +7,8 @@
 #include "Net/UnrealNetwork.h"
 #include "ZPlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
+#include "Components/AudioComponent.h"
 
 
 #define DROPPED_WEAPON_COLLISION "DroppedWeapon"
@@ -59,6 +61,24 @@ void AZWeapon::PlayFiringEffects() const
 	if(MuzzleEffect)
 	{
 		UGameplayStatics::SpawnEmitterAttached(MuzzleEffect,MeshComp,MuzzleSocketName);
+	}
+
+	if(FiringSound)
+	{
+		if(OwnerPlayer->IsLocallyControlled())
+		{
+			UGameplayStatics::SpawnSoundAttached(FiringSound,MeshComp);
+			//UGameplayStatics::SpawnSound2D(this, FiringSound);
+		}
+		else
+		{
+			UGameplayStatics::SpawnSoundAtLocation(this, FiringSound,GetActorLocation());
+		}
+	}
+
+	if(WeaponMesh_FireAnim)
+	{
+		MeshComp->PlayAnimation(WeaponMesh_FireAnim,false);
 	}
 	
 	if(OwnerPlayer->IsLocallyControlled() && FireCameraShake)
@@ -155,7 +175,7 @@ void AZWeapon::ReloadWeapon()
 
 	SetWeaponState(EWeaponState::Reloading);
 
-	const float Duration = PlayReloadAnimation();
+	const float Duration = PlayReloadEffects();
 
 	GetWorldTimerManager().SetTimer(ReloadTimerHandle,this,&AZWeapon::ReloadComplete,Duration,false,Duration);
 
@@ -165,7 +185,7 @@ void AZWeapon::ReloadWeapon()
 	}
 	else
 	{
-		MultiPlayReloadAnimation();
+		MultiPlayReloadEffects();
 	}
 }
 
@@ -204,7 +224,7 @@ void AZWeapon::ReloadComplete()
 }
 
 
-float AZWeapon::PlayReloadAnimation() const
+float AZWeapon::PlayReloadEffects()
 {
 	if(!OwnerPlayer)
 		return 0.f;
@@ -223,10 +243,28 @@ float AZWeapon::PlayReloadAnimation() const
 		}
 	}
 
+	if(ReloadSound)
+	{
+		if(OwnerPlayer->IsLocallyControlled())
+		{
+			ReloadSoundBeingPlayed = UGameplayStatics::SpawnSound2D(this, ReloadSound);
+		}
+		else
+		{
+			ReloadSoundBeingPlayed = UGameplayStatics::SpawnSoundAttached(ReloadSound,GetRootComponent());
+		}
+	}
+
+	if(WeaponMesh_ReloadAnim)
+	{
+		MeshComp->PlayAnimation(WeaponMesh_ReloadAnim, false);
+	}
+
 	return Duration;
 }
 
-void AZWeapon::StopReloadAnimation() const
+
+void AZWeapon::StopReloadEffects() const
 {
 	if(!OwnerPlayer)
 		return;
@@ -235,22 +273,35 @@ void AZWeapon::StopReloadAnimation() const
 	{
 		OwnerPlayer->StopAnimMontage(ReloadAnim);		
 	}
-}
 
-
-void AZWeapon::MultiPlayReloadAnimation_Implementation()
-{
-	if(OwnerPlayer && OwnerPlayer->GetLocalRole()==ROLE_SimulatedProxy)
+	if(ReloadSound && ReloadSoundBeingPlayed!=nullptr)
 	{
-		PlayReloadAnimation();
+		if(ReloadSoundBeingPlayed->IsPlaying())
+		{
+			ReloadSoundBeingPlayed->Stop();
+		}
+	}
+
+	if(WeaponMesh_ReloadAnim)
+	{
+		MeshComp->Stop();
 	}
 }
 
-void AZWeapon::MultiStopReloadAnimation_Implementation()
+
+void AZWeapon::MultiPlayReloadEffects_Implementation()
 {
 	if(OwnerPlayer && OwnerPlayer->GetLocalRole()==ROLE_SimulatedProxy)
 	{
-		StopReloadAnimation();
+		PlayReloadEffects();
+	}
+}
+
+void AZWeapon::MultiStopReloadEffects_Implementation()
+{
+	if(OwnerPlayer && OwnerPlayer->GetLocalRole()==ROLE_SimulatedProxy)
+	{
+		StopReloadEffects();
 	}
 }
 
@@ -291,12 +342,12 @@ void AZWeapon::InterruptReload()
 
 	if(!HasAuthority() || GetNetMode()!=NM_DedicatedServer)
 	{
-		StopReloadAnimation();
+		StopReloadEffects();
 	}
 	
 	if(HasAuthority())
 	{
-		MultiStopReloadAnimation();
+		MultiStopReloadEffects();
 	}
 }
 
@@ -534,7 +585,7 @@ void AZWeapon::OnRep_WeaponState()
 
 void AZWeapon::Interact(APlayerCharacter* PlayerInteracted)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Local, Weapon interact called"));
+	//UE_LOG(LogTemp, Warning, TEXT("Local, Weapon interact called"));
 	if(OwnerPlayer)
 		return;
 	
@@ -542,6 +593,15 @@ void AZWeapon::Interact(APlayerCharacter* PlayerInteracted)
 	{
 		PlayerInteracted->TryPickupWeapon(this);
 	}
+}
+
+
+UTexture* AZWeapon::GetCustomCrosshairIfApplicable() const
+{
+	if(bUseCustomCrosshair && CrosshairImage)
+		return CrosshairImage;
+	
+	return nullptr;
 }
 
 

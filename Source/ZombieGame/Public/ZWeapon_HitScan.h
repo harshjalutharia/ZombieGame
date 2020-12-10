@@ -62,8 +62,20 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
 	float MinimumDistanceToSpawnTracer;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon VFX")
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
 	UParticleSystem* TracerEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category ="Weapon Info")
+	UParticleSystem* DefaultImpactEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category ="Weapon Info")
+	UParticleSystem* BloodImpactEffect;
+
+	/*UPROPERTY(EditDefaultsOnly, Category = "Weapon Info", meta=(EditCondition="bAutomaticFire"))
+	UCurveFloat* RecoilCurve;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
+	float RecoilRecoveryTime;*/
 
 	int32 ShotCount;
 

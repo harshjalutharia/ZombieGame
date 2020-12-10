@@ -162,7 +162,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Weapons")
 	bool bSpawnWithWeapon;
 
-	UPROPERTY(EditAnywhere, Category = "Weapons")
+	UPROPERTY(EditAnywhere, Category = "Weapons", meta = (EditCondition = "bSpawnWithWeapon"))
 	TSubclassOf<AZWeapon> SpawnWithWeaponClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapons")

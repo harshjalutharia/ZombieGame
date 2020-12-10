@@ -247,6 +247,10 @@ void APlayerCharacter::RequestJump()
 void APlayerCharacter::StartFiring()
 {
 	bWantsToFire = true;
+
+	if(IsSprinting())
+		return;
+	
 	if(ActiveWeapon)
 	{
 		ActiveWeapon->StartFiring();
@@ -257,6 +261,10 @@ void APlayerCharacter::StartFiring()
 void APlayerCharacter::StopFiring()
 {
 	bWantsToFire = false;
+
+	if(IsSprinting())
+		return;
+	
 	if(ActiveWeapon)
 	{
 		ActiveWeapon->StopFiring();
@@ -387,6 +395,12 @@ void APlayerCharacter::SetSprinting(bool NewSprinting)
 	bWantsToSprint = NewSprinting;
 	
 	MoveComp->SetSprinting(NewSprinting);
+
+	if(!NewSprinting)
+	{
+		if(bWantsToFire)
+			StartFiring();
+	}
 }
 
 
@@ -635,7 +649,7 @@ bool APlayerCharacter::ServerAddWeaponToInventory_Validate(AZWeapon* NewWeapon, 
 
 void APlayerCharacter::TryPickupWeapon(AZWeapon* NewWeapon)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Local, Player pickup weapon called"));
+	//UE_LOG(LogTemp, Warning, TEXT("Local, Player pickup weapon called"));
 	const EInventorySlot EmptySlot = GetFirstEmptyWeaponSlot();
 	if(EmptySlot == EInventorySlot::INVALID_SLOT)
 	{
