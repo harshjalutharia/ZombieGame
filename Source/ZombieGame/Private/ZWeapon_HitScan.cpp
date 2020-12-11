@@ -9,7 +9,9 @@
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
-#include "Curves/CurveFloat.h"
+#include "NiagaraSystem.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
 
 
 AZWeapon_HitScan::AZWeapon_HitScan()
@@ -17,8 +19,10 @@ AZWeapon_HitScan::AZWeapon_HitScan()
 	WeaponRange = 30000.f;
 	AllowedViewDotHitDir = -1.f;
 	ClientSideHitLeeway = 200.f;
-	TracerRoundInterval = 3;
-	MinimumDistanceToSpawnTracer = 600.f;
+	TracerRoundInterval = 2;
+	MinimumDistanceToSpawnTracer = 500.f;
+	TracerTravelDuration = 0.5;
+	TracerEndVectorParameterName = "BeamEnd";
 
 	HeadShotDamageMultiplier = 1.f;
 	BodyShotDamageMultiplier = 1.f;
@@ -244,8 +248,12 @@ void AZWeapon_HitScan::SimulateWeaponFire(FVector ImpactLocation)
 	if(SimulatedHit)
 	{
 		PlayImpactEffects(SimulatedHitResult.Location,SimulatedHitResult.PhysMaterial->SurfaceType);
+		PlayTrailEffects(SimulatedHitResult.Location);
 	}
-	PlayTrailEffects(SimulatedHitResult.Location);
+	else
+	{
+		PlayTrailEffects(ImpactLocation);
+	}
 }
 
 
@@ -279,20 +287,20 @@ void AZWeapon_HitScan::PlayImpactEffects(FVector ImpactLocation, EPhysicalSurfac
 
 void AZWeapon_HitScan::PlayTrailEffects(FVector ImpactLocation)
 {
-	if(!TracerEffect)
-		return;
-	
-	ShotCount++;
-		
-	const FVector MuzzleLocation = GetMuzzleLocation();
-	const float ShotDistance = (ImpactLocation - MuzzleLocation).Size();
-	
-	if(ShotDistance > MinimumDistanceToSpawnTracer)
+	if(TracerEffect)
 	{
+		ShotCount++;
+		if(ShotCount>MaxClipAmmo)
+			ShotCount=1;
+		
 		if(ShotCount % TracerRoundInterval == 0)
 		{
-			auto Trail=UGameplayStatics::SpawnEmitterAtLocation(this,TracerEffect,MuzzleLocation,(ImpactLocation-MuzzleLocation).Rotation());
-
+			const float ShotDistance = (ImpactLocation - GetMuzzleLocation()).Size();
+			if(ShotDistance > MinimumDistanceToSpawnTracer)
+			{
+				auto Tracer = UNiagaraFunctionLibrary::SpawnSystemAtLocation(this,TracerEffect,GetMuzzleLocation());
+				Tracer->SetVectorParameter(TracerEndVectorParameterName,ImpactLocation);
+			}
 		}
 	}
 }

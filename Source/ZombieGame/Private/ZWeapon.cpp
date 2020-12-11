@@ -325,7 +325,7 @@ void AZWeapon::ServerUseAmmo_Implementation(int32 ClientClipAmmo)
 
 bool AZWeapon::ServerUseAmmo_Validate(int32 ClientClipAmmo)
 {
-	if(ClientClipAmmo < 0 || ClientClipAmmo>CurrentClipAmmo)
+	if(ClientClipAmmo < 0 || ClientClipAmmo>MaxClipAmmo)
 		return false;
 	return true;
 }

@@ -20,7 +20,7 @@ AZProjectileActor::AZProjectileActor()
 	
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>("ProjectileMovementComponent");
 
-	ExplosionRadialForceStrength = 300.f;
+	ExplosionRadialForceStrength = 500.f;
 
 	SetReplicates(true);
 	SetReplicatingMovement(true);
@@ -65,11 +65,6 @@ void AZProjectileActor::OnExplosionTimerExpired()
 				if(StaticMeshComp)
 				{
 					StaticMeshComp->AddRadialImpulse(GetActorLocation(),InnerExplosionRadius,ExplosionRadialForceStrength,RIF_Constant,true);
-					UE_LOG(LogTemp, Warning, TEXT("Static Mesh: %s"),*Hit.GetActor()->GetName());
-				}
-				else
-				{
-					UE_LOG(LogTemp, Warning, TEXT("Actor: %s"),*Hit.GetActor()->GetName());
 				}
             }
 		}

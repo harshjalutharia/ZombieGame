@@ -63,7 +63,13 @@ protected:
 	float MinimumDistanceToSpawnTracer;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
-	UParticleSystem* TracerEffect;
+	float TracerTravelDuration;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
+	class UNiagaraSystem* TracerEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
+	FName TracerEndVectorParameterName;
 
 	UPROPERTY(EditDefaultsOnly, Category ="Weapon Info")
 	UParticleSystem* DefaultImpactEffect;
@@ -77,7 +83,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
 	float RecoilRecoveryTime;*/
 
-	int32 ShotCount;
+	uint8 ShotCount;
 
 	UPROPERTY(ReplicatedUsing=OnRep_HitScanImpactNotify)
 	FHitScanImpact HitScanImpactNotify;
