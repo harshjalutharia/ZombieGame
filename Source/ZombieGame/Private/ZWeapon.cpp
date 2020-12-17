@@ -123,15 +123,15 @@ void AZWeapon::HandleFiring()
 			}
 
 			UseAmmo();
-			LastFireTime = GetWorld()->GetTimeSeconds();
-			
 			FireWeapon();
-			ServerFiringEffects();
 			
+			ServerFiringEffects();
 			if(!HasAuthority())
 			{
 				PlayFiringEffects();
 			}
+
+			LastFireTime = GetWorld()->GetTimeSeconds();
 		}
 	}
 }

@@ -112,12 +112,8 @@ protected:
 	FIRING STUFF
 	*/
 
-private:
-
 	bool CanFire() const { return (OwnerPlayer && (WeaponState==EWeaponState::Idle || WeaponState==EWeaponState::Firing) && CurrentClipAmmo>0); }
 	bool CanReload() const { return (OwnerPlayer && WeaponState==EWeaponState::Idle && CurrentClipAmmo!=MaxClipAmmo && CurrentReserveAmmo!=0); }
-	
-protected:
 
 	bool bWantsToFire;
 	

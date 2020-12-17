@@ -77,12 +77,21 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category ="Weapon Info")
 	UParticleSystem* BloodImpactEffect;
 
-	/*UPROPERTY(EditDefaultsOnly, Category = "Weapon Info", meta=(EditCondition="bAutomaticFire"))
-	UCurveFloat* RecoilCurve;
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info", meta=(EditCondition="bAutomaticFire"))
+	UCurveFloat* VerticalRecoilCurve;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info", meta=(EditCondition="bAutomaticFire"))
+	UCurveFloat* HorizontalRecoilCurve;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
-	float RecoilRecoveryTime;*/
+	float BulletRandomVerticalDeviationRange;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
+	float BulletRandomHorizontalDeviationRange;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
+	float MaxRecoilRecoveryTime;
+	
 	uint8 ShotCount;
 
 	UPROPERTY(ReplicatedUsing=OnRep_HitScanImpactNotify)
@@ -115,6 +124,28 @@ protected:
 	void PlayTrailEffects(FVector ImpactLocation);
 
 	void DoDamage(FHitResult& HitResult, FVector& ShotDirection);
+
+	float LowestControlRotationPitch;
+
+	float VerticalRecoilAmount;
+	float HorizontalRecoilAmount;
+
+	float OldVerticalRecoilAmount;
+	float OldHorizontalRecoilAmount;
+
+	float MaxVerticalRecoilReached;
+	float MaxHorizontalRecoilReached;
+
+	float RecoilRecoveryTime;
+	float RecoilCalculationTime;
+
+	float MaxRecoilCalculationTimeReached;
+
+	void Recoil();
+
+public:
+
+	virtual void Tick(float DeltaSeconds) override;
 	
 };
 

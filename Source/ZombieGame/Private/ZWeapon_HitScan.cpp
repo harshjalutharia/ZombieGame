@@ -16,6 +16,8 @@
 
 AZWeapon_HitScan::AZWeapon_HitScan()
 {
+	PrimaryActorTick.bCanEverTick = true;
+	
 	WeaponRange = 30000.f;
 	AllowedViewDotHitDir = -1.f;
 	ClientSideHitLeeway = 200.f;
@@ -28,6 +30,18 @@ AZWeapon_HitScan::AZWeapon_HitScan()
 	BodyShotDamageMultiplier = 1.f;
 	ArmShotDamageMultiplier = 1.f;
 	LegShotDamageMultiplier = 1.f;
+
+	VerticalRecoilAmount=0.f;
+	HorizontalRecoilAmount=0.f;
+	OldVerticalRecoilAmount=0.f;
+	OldHorizontalRecoilAmount=0.f;
+	MaxVerticalRecoilReached=0.f;
+	MaxHorizontalRecoilReached=0.f;
+	RecoilRecoveryTime=0.f;
+	RecoilCalculationTime=0.f;
+	MaxRecoilCalculationTimeReached=0.f;
+
+	LowestControlRotationPitch = 1000.f;
 }
 
 
@@ -65,6 +79,7 @@ void AZWeapon_HitScan::FireWeapon()
 						//UE_LOG(LogTemp, Warning, TEXT("Local, Bullet: No Hit"));
 						//DrawDebugLine(GetWorld(), BulletStartLocation, BulletEndLocation, FColor::Red, false,2.f,0.f,1.f);
 	ProcessInstantHit(HitResult, (HitResult.Location - GetMuzzleLocation()).GetSafeNormal());
+	Recoil();
 }
 
 
@@ -329,6 +344,94 @@ void AZWeapon_HitScan::DoDamage(FHitResult& HitResult, FVector& ShotDirection)
 	}
 
 	UGameplayStatics::ApplyPointDamage(HitResult.GetActor(),Damage,ShotDirection,HitResult,OwnerPlayer->GetController(),this,DamageTypeClass);
+}
+
+
+void AZWeapon_HitScan::Recoil()
+{
+	APlayerController* PC = Cast<APlayerController>(OwnerPlayer->GetController());
+	FRotator Rotation = PC->GetControlRotation();
+
+	const float NormalizedPitch = Rotation.Pitch>90.f ? Rotation.Pitch-360.f : Rotation.Pitch;
+	if(NormalizedPitch <= LowestControlRotationPitch)
+		LowestControlRotationPitch = NormalizedPitch;
+
+	RecoilCalculationTime+=TimeBetweenShots;
+	MaxRecoilCalculationTimeReached=RecoilCalculationTime;
+
+	if(VerticalRecoilCurve)
+	{
+		OldVerticalRecoilAmount = VerticalRecoilAmount;
+		VerticalRecoilAmount = VerticalRecoilCurve->GetFloatValue(RecoilCalculationTime);
+		const float RandomRecoil = FMath::RandRange(-BulletRandomVerticalDeviationRange,BulletRandomVerticalDeviationRange);
+		Rotation.Pitch+=VerticalRecoilAmount-OldVerticalRecoilAmount + RandomRecoil;
+		MaxVerticalRecoilReached = VerticalRecoilAmount;
+	}
+	
+	if(HorizontalRecoilCurve)
+	{
+		OldHorizontalRecoilAmount = HorizontalRecoilAmount;
+		HorizontalRecoilAmount = HorizontalRecoilCurve->GetFloatValue(RecoilCalculationTime);
+		const float RandomRecoil = FMath::RandRange(-BulletRandomHorizontalDeviationRange,BulletRandomHorizontalDeviationRange);
+		Rotation.Yaw+=HorizontalRecoilAmount-OldHorizontalRecoilAmount + RandomRecoil;
+		MaxHorizontalRecoilReached = HorizontalRecoilAmount;
+	}
+
+	PC->SetControlRotation(Rotation);
+
+	if(MaxRecoilCalculationTimeReached<=MaxRecoilRecoveryTime)
+	{
+		RecoilRecoveryTime = MaxRecoilCalculationTimeReached;
+	}
+	else
+	{
+		RecoilRecoveryTime = MaxRecoilRecoveryTime;
+	}
+}
+
+
+void AZWeapon_HitScan::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	if(!OwnerPlayer)
+		return;
+
+	if((WeaponState!=EWeaponState::Firing || CurrentClipAmmo == 0.f) && RecoilCalculationTime>0.f)
+	{
+		RecoilCalculationTime = FMath::Max(0.f,RecoilCalculationTime-(DeltaSeconds * MaxRecoilCalculationTimeReached / RecoilRecoveryTime));
+
+		APlayerController* PC = Cast<APlayerController>(OwnerPlayer->GetController());
+		FRotator Rotation = PC->GetControlRotation();
+
+		const float NormalizedPitch = Rotation.Pitch>90.f ? Rotation.Pitch-360.f : Rotation.Pitch;
+		if(NormalizedPitch <= LowestControlRotationPitch)
+		{
+			RecoilCalculationTime = 0.f;
+			VerticalRecoilAmount = 0.f;
+			HorizontalRecoilAmount = 0.f;
+			LowestControlRotationPitch = 1000.f;
+		}
+
+		else
+		{
+			if(VerticalRecoilCurve)
+			{
+				const float NewPitchDifference = MaxVerticalRecoilReached * DeltaSeconds / RecoilRecoveryTime;
+				Rotation.Pitch-=NewPitchDifference;
+				VerticalRecoilAmount = FMath::Max(0.f,VerticalRecoilAmount-NewPitchDifference);
+			}
+
+			if(HorizontalRecoilCurve)
+			{
+				const float NewYawDifference = MaxHorizontalRecoilReached * DeltaSeconds/RecoilRecoveryTime;
+				Rotation.Yaw-=NewYawDifference;
+				HorizontalRecoilAmount = FMath::Max(0.f,HorizontalRecoilAmount-NewYawDifference);				
+			}
+
+			PC->SetControlRotation(Rotation);
+		}
+	}
 }
 
 
