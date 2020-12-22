@@ -106,39 +106,32 @@ void APlayerCharacter::Tick(float DeltaTime)
 	/*
 	if(IsLocallyControlled())
 	{
-		const auto ActorBeingLookedAt = GetActorInView();
-
+		const AActor* ActorBeingLookedAt = GetActorInView();
 		
-		if(ActorBeingLookedAt)
+		if(ActorBeingLookedAt->GetClass()->ImplementsInterface(UZINT_InteractableActor::StaticClass()))
 		{
-			AZInteractableActor* InteractableActor = Cast<AZInteractableActor>(ActorBeingLookedAt);
-			
-			if(InteractableActor)
+			if(FocusedActor)
 			{
-				if(FocusedActor)
+				if(FocusedActor!=ActorBeingLookedAt)
 				{
-					if(FocusedActor!=InteractableActor)
-					{
-						FocusedActor->StopHighlightingActor();
-						InteractableActor->StartHighlightingActor();
-						FocusedActor=InteractableActor;
-					}
-				}
-				else
-				{
-					InteractableActor->StartHighlightingActor();
+					if(IZINT_InteractableActor::Execute_ShouldHighlightWhenLookedAt(FocusedActor))
+						IZINT_InteractableActor::Execute_StopHighlightingActor(FocusedActor);
+					if(IZINT_InteractableActor::Execute_ShouldHighlightWhenLookedAt(ActorBeingLookedAt))
+						IZINT_InteractableActor::Execute_StartHighlightingActor(ActorBeingLookedAt);
 					FocusedActor=InteractableActor;
 				}
 			}
-			else if(FocusedActor)
+			else
 			{
-				FocusedActor->StopHighlightingActor();
-				FocusedActor=nullptr;
-			}			
+				if(IZINT_InteractableActor::Execute_ShouldHighlightWhenLookedAt(ActorBeingLookedAt))
+					IZINT_InteractableActor::Execute_StartHighlightingActor(ActorBeingLookedAt);
+				FocusedActor=InteractableActor;
+			}
 		}
 		else if(FocusedActor)
 		{
-			FocusedActor->StopHighlightingActor();
+			if(IZINT_InteractableActor::Execute_ShouldHighlightWhenLookedAt(FocusedActor))
+				IZINT_InteractableActor::Execute_StopHighlightingActor(FocusedActor);
 			FocusedActor=nullptr;
 		}
 	}
@@ -320,18 +313,13 @@ void APlayerCharacter::Interact()
 	
 	AActor* ActorBeingLookedAt = GetActorInView();
 
-	if(ActorBeingLookedAt)
+	if(ActorBeingLookedAt->GetClass()->ImplementsInterface(UZINT_InteractableActor::StaticClass()))
 	{
-		AZWeapon* Actor = Cast<AZWeapon>(ActorBeingLookedAt);
-
-		if(Actor)
-		{
-			//UE_LOG(LogTemp, Warning, TEXT("Local, Actor valid"));
-			Actor->Interact(this);
-		}
-		//else
-			//UE_LOG(LogTemp, Warning, TEXT("Interact failed"));
+		IZINT_InteractableActor::Execute_Interact(ActorBeingLookedAt,this);
+		//UE_LOG(LogTemp, Warning, TEXT("Local, Actor valid"));
 	}
+	//else
+		//UE_LOG(LogTemp, Warning, TEXT("Interact failed"));
 }
 
 

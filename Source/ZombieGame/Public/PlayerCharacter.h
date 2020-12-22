@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-
 #include "GameFramework/Character.h"
 #include "ZWeapon.h"
 #include "ZombieGame/ZEnums.h"
@@ -80,7 +79,7 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Configuration")
 	float InteractionRange;
 
-	//class AZInteractableActor* FocusedActor;
+	//AActor* FocusedActor;
 
 	AActor* GetActorInView() const;
 	

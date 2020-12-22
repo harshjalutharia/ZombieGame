@@ -5,7 +5,6 @@
 #include "Components/BoxComponent.h"
 #include "PlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
-#include "ZPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
 #include "Components/AudioComponent.h"
@@ -584,7 +583,7 @@ void AZWeapon::OnRep_WeaponState()
 }*/
 
 
-void AZWeapon::Interact(APlayerCharacter* PlayerInteracted)
+void AZWeapon::Interact_Implementation(APlayerCharacter* PlayerInteracted)
 {
 	//UE_LOG(LogTemp, Warning, TEXT("Local, Weapon interact called"));
 	if(OwnerPlayer)

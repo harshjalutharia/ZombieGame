@@ -3,7 +3,6 @@
 
 #include "ZWeapon_Projectile.h"
 #include "PlayerCharacter.h"
-#include "ZPlayerController.h"
 #include "ZProjectileActor.h"
 #include "Sound/SoundCue.h"
 
@@ -34,14 +33,9 @@ void AZWeapon_Projectile::FireWeapon()
 
 	else
 	{
-		AZPlayerController* PC = Cast<AZPlayerController>(OwnerPlayer->GetController());
-
-		if(!PC)
-			return;
-		
 		FVector CameraLocation;
 		FRotator CameraRotation;
-		PC->GetPlayerViewPoint(CameraLocation, CameraRotation);
+		OwnerPlayer->GetController()->GetPlayerViewPoint(CameraLocation, CameraRotation);
 		
 		const FVector MuzzleLocation = GetMuzzleLocation();
 		
@@ -51,7 +45,7 @@ void AZWeapon_Projectile::FireWeapon()
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		
 		AZProjectileActor* Projectile = GetWorld()->SpawnActor<AZProjectileActor>(ProjectileClass, MuzzleLocation, CameraRotation, SpawnParams);
-		Projectile->InstigatorController = PC;
+		Projectile->InstigatorController = OwnerPlayer->GetController();
 		Projectile->DamageTypeClass = DamageTypeClass;
 		Projectile->InnerExplosionRadius = InnerExplosionRadius;
 		Projectile->OuterExplosionRadius = OuterExplosionRadius;

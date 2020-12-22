@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-
-#include "ZInteractableActor.h"
+#include "GameFramework/Actor.h"
+#include "Interfaces/ZINT_InteractableActor.h"
 #include "ZombieGame/ZEnums.h"
 #include "ZWeapon.generated.h"
 
 
 UCLASS()
-class ZOMBIEGAME_API AZWeapon : public AZInteractableActor
+class ZOMBIEGAME_API AZWeapon : public AActor, public IZINT_InteractableActor
 {
 	GENERATED_BODY()
 	
@@ -217,7 +217,7 @@ public:
 
 	void AttachWeaponToAssignedSlotOrHand(bool bAttachToHand);
 
-	virtual void Interact(APlayerCharacter* PlayerInteracted) override;
+	virtual void Interact_Implementation(APlayerCharacter* PlayerInteracted) override;
 
 	void SetEquipped(bool bNewEquipped) { bIsEquipped = bNewEquipped; }
 
