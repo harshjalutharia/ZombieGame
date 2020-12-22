@@ -4,17 +4,25 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Interfaces/ZINT_ZPlayerController.h"
 #include "ZPlayerController.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class ZOMBIEGAME_API AZPlayerController : public APlayerController
+class ZOMBIEGAME_API AZPlayerController : public APlayerController , public IZINT_ZPlayerController
 {
 	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere)
+	UUserWidget* PlayerHUD;
 
 public:
 
 	AZPlayerController();
+
+	virtual void AssignPlayerHUD_Implementation(UUserWidget* NewHUD) override;
+
+	virtual void PlayLocalFiringEffects_Implementation(TSubclassOf<UCameraShake> FireCameraShake) override;
 };

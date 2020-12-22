@@ -69,3 +69,12 @@ void UPlayerUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 
 	Super::NativeTick(MyGeometry, InDeltaTime);
 }
+
+
+void UPlayerUI::PlayCrosshairRecoil_Implementation()
+{
+	if(CrosshairRecoilAnimation)
+	{
+		PlayAnimation(CrosshairRecoilAnimation);
+	}
+}

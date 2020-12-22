@@ -4,7 +4,6 @@
 #include "ZWeapon_HitScan.h"
 #include "ZombieGame/ZombieGame.h"
 #include "PlayerCharacter.h"
-#include "ZPlayerController.h"
 #include "DrawDebugHelpers.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
@@ -47,15 +46,10 @@ AZWeapon_HitScan::AZWeapon_HitScan()
 
 void AZWeapon_HitScan::FireWeapon()
 {
-	AZPlayerController* PC = Cast<AZPlayerController>(OwnerPlayer->Controller);
-
-	if(!PC)
-		return;
-
 	FVector CameraLocation;
 	FRotator CameraRotation;
-	
-	PC->GetPlayerViewPoint(CameraLocation, CameraRotation);
+
+	OwnerPlayer->GetController()->GetPlayerViewPoint(CameraLocation, CameraRotation);
 
 	const FVector CameraTraceStartLocation = CameraLocation + CameraRotation.Vector() * (FVector::DotProduct((GetMuzzleLocation() - CameraLocation),CameraRotation.Vector()));
 	const FVector CameraTraceEndLocation = CameraLocation + CameraRotation.Vector() * WeaponRange;
@@ -349,8 +343,10 @@ void AZWeapon_HitScan::DoDamage(FHitResult& HitResult, FVector& ShotDirection)
 
 void AZWeapon_HitScan::Recoil()
 {
-	APlayerController* PC = Cast<APlayerController>(OwnerPlayer->GetController());
-	FRotator Rotation = PC->GetControlRotation();
+	if(!OwnerPlayer)
+		return;
+	
+	FRotator Rotation = OwnerPlayer->GetController()->GetControlRotation();
 
 	const float NormalizedPitch = Rotation.Pitch>90.f ? Rotation.Pitch-360.f : Rotation.Pitch;
 	if(NormalizedPitch <= LowestControlRotationPitch)
@@ -377,7 +373,7 @@ void AZWeapon_HitScan::Recoil()
 		MaxHorizontalRecoilReached = HorizontalRecoilAmount;
 	}
 
-	PC->SetControlRotation(Rotation);
+	OwnerPlayer->GetController()->SetControlRotation(Rotation);
 
 	if(MaxRecoilCalculationTimeReached<=MaxRecoilRecoveryTime)
 	{
@@ -400,9 +396,8 @@ void AZWeapon_HitScan::Tick(float DeltaSeconds)
 	if((WeaponState!=EWeaponState::Firing || CurrentClipAmmo == 0.f) && RecoilCalculationTime>0.f)
 	{
 		RecoilCalculationTime = FMath::Max(0.f,RecoilCalculationTime-(DeltaSeconds * MaxRecoilCalculationTimeReached / RecoilRecoveryTime));
-
-		APlayerController* PC = Cast<APlayerController>(OwnerPlayer->GetController());
-		FRotator Rotation = PC->GetControlRotation();
+		
+		FRotator Rotation = OwnerPlayer->GetController()->GetControlRotation();
 
 		const float NormalizedPitch = Rotation.Pitch>90.f ? Rotation.Pitch-360.f : Rotation.Pitch;
 		if(NormalizedPitch <= LowestControlRotationPitch)
@@ -429,7 +424,7 @@ void AZWeapon_HitScan::Tick(float DeltaSeconds)
 				HorizontalRecoilAmount = FMath::Max(0.f,HorizontalRecoilAmount-NewYawDifference);				
 			}
 
-			PC->SetControlRotation(Rotation);
+			OwnerPlayer->GetController()->SetControlRotation(Rotation);
 		}
 	}
 }

@@ -9,6 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
 #include "Components/AudioComponent.h"
+#include "Interfaces/ZINT_ZPlayerController.h"
 
 
 #define DROPPED_WEAPON_COLLISION "DroppedWeapon"
@@ -83,10 +84,10 @@ void AZWeapon::PlayFiringEffects() const
 	
 	if(OwnerPlayer->IsLocallyControlled() && FireCameraShake)
 	{
-		AZPlayerController* PC = Cast<AZPlayerController>(OwnerPlayer->GetController());
-		if(PC)
+		const bool bImplements = OwnerPlayer->GetController()->GetClass()->ImplementsInterface(UZINT_ZPlayerController::StaticClass());
+		if(bImplements)
 		{
-			PC->ClientPlayCameraShake(FireCameraShake);
+			IZINT_ZPlayerController::Execute_PlayLocalFiringEffects(OwnerPlayer->GetController(),FireCameraShake);
 		}
 	}
 }

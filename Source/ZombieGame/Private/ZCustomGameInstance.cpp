@@ -3,6 +3,7 @@
 
 #include "ZCustomGameInstance.h"
 #include "Blueprint/UserWidget.h"
+#include "Interfaces/ZINT_ZPlayerController.h"
 
 
 UZCustomGameInstance::UZCustomGameInstance(const FObjectInitializer& ObjectInitializer)
@@ -28,4 +29,9 @@ void UZCustomGameInstance::LoadPlayerHUD()
 		return;
 
 	PlayerHUD->AddToViewport();
+
+	if(PC->GetClass()->ImplementsInterface(UZINT_ZPlayerController::StaticClass()))
+	{
+		IZINT_ZPlayerController::Execute_AssignPlayerHUD(PC,PlayerHUD);
+	}
 }

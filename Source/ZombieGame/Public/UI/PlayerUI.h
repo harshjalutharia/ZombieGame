@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Interfaces/ZINT_PlayerHUD.h"
 #include "PlayerUI.generated.h"
 
 class UTextBlock;
@@ -16,7 +17,7 @@ class UZHealthComponent;
  * 
  */
 UCLASS()
-class ZOMBIEGAME_API UPlayerUI : public UUserWidget
+class ZOMBIEGAME_API UPlayerUI : public UUserWidget, public IZINT_PlayerHUD
 {
 	GENERATED_BODY()
 
@@ -28,8 +29,10 @@ protected:
 
 private:
 
+	UPROPERTY(VisibleAnywhere)
 	APlayerCharacter* OwnerPlayer;
 
+	UPROPERTY(VisibleAnywhere)
 	UZHealthComponent* HealthComp;
 
 	float MaxHealth;
@@ -51,4 +54,12 @@ protected:
 	UPROPERTY(meta=(BindWidget))
 	UProgressBar* HealthBar;
 
+	// Animation being set in WBP graph
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UWidgetAnimation* CrosshairRecoilAnimation;
+
+public:
+
+	virtual void PlayCrosshairRecoil_Implementation() override;
+	
 };
