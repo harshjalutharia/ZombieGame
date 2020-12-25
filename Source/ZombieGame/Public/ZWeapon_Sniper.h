@@ -13,5 +13,8 @@ UCLASS()
 class ZOMBIEGAME_API AZWeapon_Sniper : public AZWeapon_HitScan
 {
 	GENERATED_BODY()
+
+public:
+	AZWeapon_Sniper();
 	
 };

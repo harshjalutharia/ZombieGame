@@ -3,3 +3,8 @@
 
 #include "ZWeapon_Sniper.h"
 
+
+AZWeapon_Sniper::AZWeapon_Sniper()
+{
+	ZoomFOV = 45.f;
+}

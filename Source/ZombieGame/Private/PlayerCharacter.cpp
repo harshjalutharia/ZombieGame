@@ -6,6 +6,7 @@
 #include "Camera/CameraComponent.h"
 #include "ZHealthComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "ZWeapon.h"
 
 
 // Sets default values
@@ -656,6 +657,15 @@ void APlayerCharacter::SetActiveWeaponState(EWeaponState NewWeaponState)
 {
 	ActiveWeaponState = NewWeaponState;
 	MoveComp->SetActiveWeaponState(NewWeaponState);
+}
+
+
+float APlayerCharacter::GetWeaponZoomFOV_Implementation() const
+{
+	if(ActiveWeapon)
+		return ActiveWeapon->GetZoomFOV();
+	else
+		return 0.f;
 }
 
 

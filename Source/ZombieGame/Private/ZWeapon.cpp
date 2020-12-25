@@ -26,6 +26,7 @@ AZWeapon::AZWeapon()
 	ReloadTimeWithoutAnimation = 2.f;
 	TimeBetweenShots = 0.5f;
 	LastFireTime = 0.f;
+	ZoomFOV = 65.f;
 	
 	MeshComp->SetCollisionProfileName(DROPPED_WEAPON_COLLISION);
 	MeshComp->SetSimulatePhysics(true);

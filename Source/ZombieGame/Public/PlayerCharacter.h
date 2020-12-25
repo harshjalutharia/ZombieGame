@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "ZWeapon.h"
+#include "Interfaces/ZINT_PlayerCharacter.h"
 #include "ZombieGame/ZEnums.h"
 #include "PlayerCharacter.generated.h"
 
@@ -16,7 +16,7 @@ class AZWeapon;
 
 
 UCLASS()
-class ZOMBIEGAME_API APlayerCharacter : public ACharacter
+class ZOMBIEGAME_API APlayerCharacter : public ACharacter, public IZINT_PlayerCharacter
 {
 	GENERATED_BODY()
 
@@ -227,7 +227,17 @@ public:
 	UFUNCTION(BlueprintCallable)
     bool IsIdleJump() const { return bIdleJump; }
 
-	UCameraComponent* GetCameraComponent() const { return CameraComp; }
 	UZHealthComponent* GetHealthComponent() const { return HealthComp; }
-	
+
+	/*
+	 *INTERFACE FUNCTIONS
+	 */
+
+	virtual float GetWeaponZoomFOV_Implementation() const override;
+
+	virtual bool GetIsAiming_Implementation() const override { return IsAiming(); }
+
+	virtual  bool GetIsCrouched_Implementation() const override { return bIsCrouched; }
+
+	virtual UCameraComponent* GetCameraComponent_Implementation() const override { return CameraComp; }
 };

@@ -19,7 +19,6 @@ class ZOMBIEGAME_API AZPlayerCameraManager : public APlayerCameraManager
 	virtual void UpdateCamera(float DeltaTime) override;
 
 	float NormalFOV;
-	float AimingFOV;
 	float FOVInterpSpeed;
 
 	float CurrentCrouchOffset;

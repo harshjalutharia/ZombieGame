@@ -60,6 +60,9 @@ protected:
 	FName MuzzleSocketName;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
+	float ZoomFOV;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
 	UAnimMontage* FireAnim_Hip;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
@@ -263,6 +266,8 @@ protected:
 	*/
 
 public:
+
+	float GetZoomFOV() const { return ZoomFOV; }
 
 	UTexture* GetCustomCrosshairIfApplicable() const;
 };

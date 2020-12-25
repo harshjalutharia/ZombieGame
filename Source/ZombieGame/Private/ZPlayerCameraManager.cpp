@@ -3,13 +3,12 @@
 
 #include "ZPlayerCameraManager.h"
 #include "Camera/CameraComponent.h"
-#include "PlayerCharacter.h"
+#include "Interfaces/ZINT_PlayerCharacter.h"
 
 
 AZPlayerCameraManager::AZPlayerCameraManager()
 {
 	NormalFOV = 90.f;
-	AimingFOV = 65.f;
 	FOVInterpSpeed = 20.f;
 
 	ViewPitchMax = 87.f;
@@ -24,28 +23,28 @@ AZPlayerCameraManager::AZPlayerCameraManager()
 
 void AZPlayerCameraManager::UpdateCamera(float DeltaTime)
 {
-	APlayerCharacter* Player = Cast<APlayerCharacter>(PCOwner->GetPawn());
-	if(Player)
+	const APawn* Player = PCOwner->GetPawn();
+	if(Player && Player->GetClass()->ImplementsInterface(UZINT_PlayerCharacter::StaticClass()))
 	{
-		const float TargetFOV = (Player->IsAiming())? AimingFOV : NormalFOV;
+		const float TargetFOV = (IZINT_PlayerCharacter::Execute_GetIsAiming(Player))? IZINT_PlayerCharacter::Execute_GetWeaponZoomFOV(Player) : NormalFOV;
 		DefaultFOV = FMath::FInterpTo(DefaultFOV, TargetFOV, DeltaTime, FOVInterpSpeed);
 		SetFOV(DefaultFOV);
 		
-		if(Player->bIsCrouched && !bWasCrouched)
+		if(IZINT_PlayerCharacter::Execute_GetIsCrouched(Player) && !bWasCrouched)
 		{
 			CurrentCrouchOffset = MaxCrouchOffsetZ;
 		}
-		else if(!Player->bIsCrouched && bWasCrouched)
+		else if(!IZINT_PlayerCharacter::Execute_GetIsCrouched(Player) && bWasCrouched)
 		{
 			CurrentCrouchOffset = -MaxCrouchOffsetZ;
 		}
 
-		bWasCrouched = Player->bIsCrouched;
+		bWasCrouched = IZINT_PlayerCharacter::Execute_GetIsCrouched(Player);
 		CurrentCrouchOffset = FMath::LerpStable(CurrentCrouchOffset, 0.f, FMath::Clamp(CrouchLerpSpeed*DeltaTime,0.f, 1.f));
 
-		const FVector CurrentCameraOffset = Player->GetCameraComponent()->GetRelativeLocation();
+		const FVector CurrentCameraOffset = IZINT_PlayerCharacter::Execute_GetCameraComponent(Player)->GetRelativeLocation();
 		const FVector NewCameraOffset = FVector(CurrentCameraOffset.X, CurrentCameraOffset.Y, DefaultCameraOffsetZ + CurrentCrouchOffset);
-		Player->GetCameraComponent()->SetRelativeLocation(NewCameraOffset);
+		IZINT_PlayerCharacter::Execute_GetCameraComponent(Player)->SetRelativeLocation(NewCameraOffset);
 	}
 	Super::UpdateCamera(DeltaTime);
 }
