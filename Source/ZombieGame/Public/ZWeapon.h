@@ -105,7 +105,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	class UBoxComponent* BoxComp;
 
-	UPROPERTY(BlueprintReadWrite, Category = "Components")
+	UPROPERTY(VisibleAnywhere, Category = "Components")
 	class USkeletalMeshComponent* MeshComp;
 
 	/*

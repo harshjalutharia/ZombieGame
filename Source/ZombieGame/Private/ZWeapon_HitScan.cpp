@@ -117,7 +117,7 @@ void AZWeapon_HitScan::InstantHitConfirmed(FHitResult& HitResult, FVector ShotDi
 		HitScanImpactNotify.BurstCounter+=1;
 		HitScanImpactNotify.ImpactLocation = HitResult.Location;
 	}
-	if(GetNetMode()!=NM_DedicatedServer)
+	if(!HasAuthority() || GetNetMode()!=NM_DedicatedServer)
 	{
 		SimulateWeaponFire(HitResult.Location);
 	}
@@ -215,6 +215,11 @@ void AZWeapon_HitScan::ServerNotifyMiss_Implementation(FVector_NetQuantizeNormal
 	{
 		HitScanImpactNotify.BurstCounter+=1;
 		HitScanImpactNotify.ImpactLocation = GetMuzzleLocation() + (ShotDirection * WeaponRange);
+	}
+
+	if(GetNetMode()!=NM_DedicatedServer)
+	{
+		SimulateWeaponFire(HitScanImpactNotify.ImpactLocation);
 	}
 }
 

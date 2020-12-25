@@ -414,7 +414,7 @@ void AZWeapon::PullOutWeapon()
 		WeaponInHand->InterruptReload();
 	}
 	
-	float Duration = PlayWeaponSwitchAnimation();
+	const float Duration = PlayWeaponSwitchAnimation();
 
 	if(OwnerPlayer->IsLocallyControlled() || HasAuthority())
 	{
