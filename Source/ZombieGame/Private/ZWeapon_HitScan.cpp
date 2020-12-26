@@ -365,7 +365,8 @@ void AZWeapon_HitScan::Recoil()
 		OldVerticalRecoilAmount = VerticalRecoilAmount;
 		VerticalRecoilAmount = VerticalRecoilCurve->GetFloatValue(RecoilCalculationTime);
 		const float RandomRecoil = FMath::RandRange(-BulletRandomVerticalDeviationRange,BulletRandomVerticalDeviationRange);
-		Rotation.Pitch+=VerticalRecoilAmount-OldVerticalRecoilAmount + RandomRecoil;
+		VerticalRecoilAmount+=RandomRecoil;
+		Rotation.Pitch+=VerticalRecoilAmount-OldVerticalRecoilAmount;
 		MaxVerticalRecoilReached = VerticalRecoilAmount;
 	}
 	
@@ -374,7 +375,8 @@ void AZWeapon_HitScan::Recoil()
 		OldHorizontalRecoilAmount = HorizontalRecoilAmount;
 		HorizontalRecoilAmount = HorizontalRecoilCurve->GetFloatValue(RecoilCalculationTime);
 		const float RandomRecoil = FMath::RandRange(-BulletRandomHorizontalDeviationRange,BulletRandomHorizontalDeviationRange);
-		Rotation.Yaw+=HorizontalRecoilAmount-OldHorizontalRecoilAmount + RandomRecoil;
+		HorizontalRecoilAmount+=RandomRecoil;
+		Rotation.Yaw+=HorizontalRecoilAmount-OldHorizontalRecoilAmount;
 		MaxHorizontalRecoilReached = HorizontalRecoilAmount;
 	}
 
