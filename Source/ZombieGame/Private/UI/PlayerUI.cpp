@@ -4,6 +4,7 @@
 #include "UI/PlayerUI.h"
 #include "Components/TextBlock.h"
 #include "Components/ProgressBar.h"
+#include "Components/Image.h"
 #include "ZombieGame/Public/PlayerCharacter.h"
 #include "ZHealthComponent.h"
 #include "ZWeapon.h"
@@ -15,7 +16,7 @@ bool UPlayerUI::Initialize()
 	if(!Success)
 		return false;
 
-	if(!HealthText || !HealthBar || !ClipAmmoText || !ReserveAmmoText || !AmmoDivider)
+	if(!HealthText || !HealthBar || !ClipAmmoText || !ReserveAmmoText || !AmmoDivider /*|| !ActiveWeaponImage*/)
 		return false;
 	
 	OwnerPlayer = Cast<APlayerCharacter>(GetOwningPlayerPawn());
@@ -49,25 +50,55 @@ void UPlayerUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 		HealthBar->SetPercent(HealthComp->GetHealth()/MaxHealth);
 	}
 
-	const AZWeapon* ActiveWeapon = OwnerPlayer->GetActiveWeapon();
+	AZWeapon* ActiveWeapon = OwnerPlayer->GetActiveWeapon();
 
 	if(ActiveWeapon != nullptr)
 	{
-		ClipAmmoText->SetVisibility(ESlateVisibility::Visible);
-		ReserveAmmoText->SetVisibility(ESlateVisibility::Visible);
-		AmmoDivider->SetVisibility(ESlateVisibility::Visible);
+		if(LastActiveWeapon == nullptr || LastActiveWeapon != ActiveWeapon)
+		{
+			LastActiveWeapon = ActiveWeapon;
+			
+			ClipAmmoText->SetVisibility(ESlateVisibility::Visible);
+			ReserveAmmoText->SetVisibility(ESlateVisibility::Visible);
+			AmmoDivider->SetVisibility(ESlateVisibility::Visible);
+
+			if(ActiveWeapon->GetWeaponImageUI())
+			{
+				ActiveWeaponImage->SetBrushFromTexture(ActiveWeapon->GetWeaponImageUI());
+				ActiveWeaponImage->SetVisibility(ESlateVisibility::Visible);
+				PlayWeaponEquipAnimation();
+			}
+			else
+			{
+				ActiveWeaponImage->SetVisibility(ESlateVisibility::Hidden);
+			}
+		}
 			
 		ClipAmmoText->SetText(FText::FromString(FString::FromInt(ActiveWeapon->GetCurrentClipAmmo())));
 		ReserveAmmoText->SetText(FText::FromString(FString::FromInt(ActiveWeapon->GetCurrentReserveAmmo())));
 	}
+	
 	else
 	{
+		LastActiveWeapon = nullptr;
+		
 		ClipAmmoText->SetVisibility(ESlateVisibility::Hidden);
 		ReserveAmmoText->SetVisibility(ESlateVisibility::Hidden);
 		AmmoDivider->SetVisibility(ESlateVisibility::Hidden);
+		ActiveWeaponImage->SetVisibility(ESlateVisibility::Hidden);
 	}
 
 	Super::NativeTick(MyGeometry, InDeltaTime);
+}
+
+
+void UPlayerUI::PlayWeaponEquipAnimation()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Weapon Switch animation played"));
+	if(WeaponEquipAnimation)
+	{
+		PlayAnimation(WeaponEquipAnimation);
+	}
 }
 
 

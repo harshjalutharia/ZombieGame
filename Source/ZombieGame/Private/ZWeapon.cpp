@@ -597,6 +597,7 @@ void AZWeapon::Interact_Implementation(APlayerCharacter* PlayerInteracted)
 }
 
 
+/*
 UTexture* AZWeapon::GetCustomCrosshairIfApplicable() const
 {
 	if(bUseCustomCrosshair && CrosshairImage)
@@ -604,6 +605,7 @@ UTexture* AZWeapon::GetCustomCrosshairIfApplicable() const
 	
 	return nullptr;
 }
+*/
 
 
 void AZWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

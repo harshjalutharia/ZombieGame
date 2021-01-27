@@ -92,11 +92,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category ="Weapon Info")
 	USoundBase* ReloadSound;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
+	UPROPERTY(EditDefaultsOnly, Category ="Weapon Info")
+	UTexture2D* WeaponImageUI;
+
+	/*UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
 	bool bUseCustomCrosshair;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info", meta = (EditCondition = "bUseCustomCrosshair"))
-	UTexture* CrosshairImage;
+	UTexture* CrosshairImage;*/
 
 	/*
 	COMPONENTS
@@ -269,5 +272,7 @@ public:
 
 	float GetZoomFOV() const { return ZoomFOV; }
 
-	UTexture* GetCustomCrosshairIfApplicable() const;
+	UTexture2D* GetWeaponImageUI() const { return WeaponImageUI; }
+
+	/*UTexture* GetCustomCrosshairIfApplicable() const;*/
 };

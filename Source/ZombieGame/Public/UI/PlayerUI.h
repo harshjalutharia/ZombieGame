@@ -9,6 +9,7 @@
 
 class UTextBlock;
 class UProgressBar;
+class UImage;
 class APlayerCharacter;
 class AZWeapon;
 class UZHealthComponent;
@@ -54,9 +55,20 @@ protected:
 	UPROPERTY(meta=(BindWidget))
 	UProgressBar* HealthBar;
 
+	UPROPERTY(meta=(BindWidget))
+	UImage* ActiveWeaponImage;
+
+	UPROPERTY(BlueprintReadOnly)
+	class AZWeapon* LastActiveWeapon;
+
 	// Animation being set in WBP graph
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UWidgetAnimation* CrosshairRecoilAnimation;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UWidgetAnimation* WeaponEquipAnimation;
+
+	void PlayWeaponEquipAnimation();
 
 public:
 
