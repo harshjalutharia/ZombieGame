@@ -282,7 +282,7 @@ void AZWeapon::StopReloadEffects() const
 			ReloadSoundBeingPlayed->Stop();
 		}
 	}
-
+ 
 	if(WeaponMesh_ReloadAnim)
 	{
 		MeshComp->Stop();

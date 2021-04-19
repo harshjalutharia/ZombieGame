@@ -167,6 +167,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	PlayerInputComponent->BindAction("LastWeapon",IE_Pressed, this, &APlayerCharacter::QuickSwitchWeapon);
 
+	
 	PlayerInputComponent->BindAction("WeaponSlot1",IE_Pressed, this, &APlayerCharacter::UseWeaponSlot1);
 	PlayerInputComponent->BindAction("WeaponSlot2",IE_Pressed, this, &APlayerCharacter::UseWeaponSlot2);
 

@@ -73,7 +73,7 @@ void UPlayerUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 				ActiveWeaponImage->SetVisibility(ESlateVisibility::Hidden);
 			}
 		}
-			
+		
 		ClipAmmoText->SetText(FText::FromString(FString::FromInt(ActiveWeapon->GetCurrentClipAmmo())));
 		ReserveAmmoText->SetText(FText::FromString(FString::FromInt(ActiveWeapon->GetCurrentReserveAmmo())));
 	}
@@ -94,7 +94,6 @@ void UPlayerUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 
 void UPlayerUI::PlayWeaponEquipAnimation()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Weapon Switch animation played"));
 	if(WeaponEquipAnimation)
 	{
 		PlayAnimation(WeaponEquipAnimation);

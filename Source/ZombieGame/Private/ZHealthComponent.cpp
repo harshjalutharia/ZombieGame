@@ -35,7 +35,6 @@ void UZHealthComponent::BeginPlay()
 void UZHealthComponent::OnRep_CurrentHealth(float OldHealth)
 {
 	const float Damage = OldHealth-CurrentHealth;
-	UE_LOG(LogTemp, Warning, TEXT("Client Health: %f"),CurrentHealth);
 	OnHealthChanged.Broadcast(this,CurrentHealth, Damage);
 }
 
@@ -52,9 +51,13 @@ void UZHealthComponent::OnTakeDamage(AActor* DamagedActor, float Damage, const U
 		return;
 	
 	CurrentHealth -= DamageToApply;
-	UE_LOG(LogTemp, Warning, TEXT("Health: %f"),CurrentHealth);
 
 	OnHealthChanged.Broadcast(this,CurrentHealth, DamageToApply);
+
+	if(CurrentHealth==0.f)
+	{
+		OnHealthZero.Broadcast(this,DamageToApply,DamageType,InstigatedBy,DamageCauser);
+	}
 }
 
 

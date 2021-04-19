@@ -7,6 +7,7 @@
 #include "ZHealthComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnHealthChangedSignature, class UZHealthComponent*, HealthComponent, float, Health, float, HealthDelta);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOnHealthZeroSignature, class UZHealthComponent*, HealthComponent, float, HealthDelta, const class UDamageType*, DamageType, class AController*, InstigatedBy, AActor*, DamageCauser);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class ZOMBIEGAME_API UZHealthComponent : public UActorComponent
@@ -36,6 +37,9 @@ public:
 
 	UPROPERTY()
 	FOnHealthChangedSignature OnHealthChanged;
+
+	UPROPERTY()
+	FOnHealthZeroSignature OnHealthZero;
 
 	UFUNCTION()
 	void OnTakeDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
