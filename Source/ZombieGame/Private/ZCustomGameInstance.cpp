@@ -20,6 +20,10 @@ UZCustomGameInstance::UZCustomGameInstance(const FObjectInitializer& ObjectIniti
 	ConstructorHelpers::FClassFinder<UUserWidget>LoadingScreenWidgetBPClass(TEXT("/Game/MenuSystem/WBP_LoadingScreen"));
 	if(!LoadingScreenWidgetBPClass.Class) return;
 	LoadingScreenClass = LoadingScreenWidgetBPClass.Class;
+
+	ConstructorHelpers::FClassFinder<UUserWidget>PauseMenuWidgetBPClass(TEXT("/Game/MenuSystem/WBP_PauseMenu"));
+	if(!PauseMenuWidgetBPClass.Class) return;
+	PauseMenuClass = PauseMenuWidgetBPClass.Class;
 }
 
 
@@ -67,4 +71,18 @@ void UZCustomGameInstance::LoadLoadingScreen()
 	if(!ensure(LoadingScreen!=nullptr)) return;
 
 	LoadingScreen->Setup(false);
+}
+
+
+void UZCustomGameInstance::LoadPauseMenu()
+{
+	if(!PauseMenuClass) return;
+
+	APlayerController* PC = GetFirstLocalPlayerController(GetWorld());
+	if(!ensure(PC!=nullptr)) return;
+
+	UMenuWidget* PauseMenu = CreateWidget<UMenuWidget>(PC,PauseMenuClass);
+	if(!ensure(PauseMenu!=nullptr)) return;
+
+	PauseMenu->Setup(true);
 }

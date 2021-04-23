@@ -27,6 +27,9 @@ public:
 	UFUNCTION(BlueprintCallable)
     void LoadLoadingScreen();
 
+	UFUNCTION(BlueprintCallable)
+    void LoadPauseMenu();
+
 private:
 
 	TSubclassOf<UUserWidget> PlayerHUDClass;
@@ -34,4 +37,6 @@ private:
 	TSubclassOf<UUserWidget> MainMenuClass;
 
 	TSubclassOf<UUserWidget> LoadingScreenClass;
+
+	TSubclassOf<UUserWidget> PauseMenuClass;
 };
