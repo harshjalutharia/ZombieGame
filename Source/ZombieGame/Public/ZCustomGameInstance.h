@@ -21,7 +21,17 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void LoadPlayerHUD();
 
+	UFUNCTION(BlueprintCallable)
+	void LoadMainMenu();
+
+	UFUNCTION(BlueprintCallable)
+    void LoadLoadingScreen();
+
 private:
 
 	TSubclassOf<UUserWidget> PlayerHUDClass;
+
+	TSubclassOf<UUserWidget> MainMenuClass;
+
+	TSubclassOf<UUserWidget> LoadingScreenClass;
 };
