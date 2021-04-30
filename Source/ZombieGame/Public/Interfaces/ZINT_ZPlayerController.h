@@ -27,5 +27,5 @@ public:
     void AssignPlayerHUD(UUserWidget* NewHUD);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void PlayLocalFiringEffects(TSubclassOf<UCameraShake> FireCameraShake);
+	void PlayLocalFiringEffects(TSubclassOf<UMatineeCameraShake> FireCameraShake);
 };

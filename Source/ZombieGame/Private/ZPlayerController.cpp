@@ -19,9 +19,9 @@ void AZPlayerController::AssignPlayerHUD_Implementation(UUserWidget* NewHUD)
 }
 
 
-void AZPlayerController::PlayLocalFiringEffects_Implementation(TSubclassOf<UCameraShake> FireCameraShake)
+void AZPlayerController::PlayLocalFiringEffects_Implementation(TSubclassOf<UMatineeCameraShake> FireCameraShake)
 {
-    ClientPlayCameraShake(FireCameraShake);
+    ClientStartCameraShake(FireCameraShake);
 
     if(PlayerHUD && PlayerHUD->IsInViewport())
     {

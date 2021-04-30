@@ -84,7 +84,7 @@ protected:
 	UParticleSystem* MuzzleEffect;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon Info")
-	TSubclassOf<UCameraShake> FireCameraShake;
+	TSubclassOf<UMatineeCameraShake> FireCameraShake;
 
 	UPROPERTY(EditDefaultsOnly, Category ="Weapon Info")
 	USoundBase* FiringSound;

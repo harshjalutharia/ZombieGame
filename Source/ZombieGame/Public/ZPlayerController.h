@@ -24,5 +24,5 @@ public:
 
 	virtual void AssignPlayerHUD_Implementation(UUserWidget* NewHUD) override;
 
-	virtual void PlayLocalFiringEffects_Implementation(TSubclassOf<UCameraShake> FireCameraShake) override;
+	virtual void PlayLocalFiringEffects_Implementation(TSubclassOf<UMatineeCameraShake> FireCameraShake) override;
 };
