@@ -2,9 +2,10 @@
 
 
 #include "MenuSystem/MenuWidget.h"
+#include "Interfaces/ZINT_GameInstance.h"
 
 
-void UMenuWidget::Setup(bool bShowCursor)
+void UMenuWidget::Setup(bool bShowCursor, class IZINT_GameInstance* NewInterface)
 {
 	AddToViewport();
 	bIsFocusable = true;
@@ -27,6 +28,7 @@ void UMenuWidget::Setup(bool bShowCursor)
 	}
 
 	PC->SetInputMode(InputModeData);
+	GameInstanceInterface = NewInterface;
 }
 
 

@@ -14,9 +14,12 @@ class ZOMBIEGAME_API UMenuWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
+protected:
+	class IZINT_GameInstance* GameInstanceInterface;
+
 public:
 	
-	void Setup(bool bShowCursor);
+	void Setup(bool bShowCursor, class IZINT_GameInstance* NewInterface = nullptr);
 
 	void Teardown();
 

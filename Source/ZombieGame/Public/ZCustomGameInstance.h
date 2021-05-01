@@ -4,13 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
+#include "Interfaces/ZINT_GameInstance.h"
+
 #include "ZCustomGameInstance.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class ZOMBIEGAME_API UZCustomGameInstance : public UGameInstance
+class ZOMBIEGAME_API UZCustomGameInstance : public UGameInstance, public IZINT_GameInstance
 {
 	GENERATED_BODY()
 
@@ -32,6 +34,8 @@ public:
 
 private:
 
+	class UMainMenu* MainMenu;
+
 	TSubclassOf<UUserWidget> PlayerHUDClass;
 
 	TSubclassOf<UUserWidget> MainMenuClass;
@@ -39,4 +43,12 @@ private:
 	TSubclassOf<UUserWidget> LoadingScreenClass;
 
 	TSubclassOf<UUserWidget> PauseMenuClass;
+
+	FDelegateHandle LoginDelegateHandle;
+
+	void OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId &UserId, const FString &Error);
+
+public:
+
+	virtual void AttemptLogin() override;
 };

@@ -31,6 +31,28 @@ private:
 	UWidgetSwitcher* MenuSwitcher;
 
 	/*
+	Login Menu
+	*/
+
+	UPROPERTY(meta = (BindWidget))
+	UWidget* LoginMenu;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* LoginButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UPanelWidget* LoginPopup;
+
+	UPROPERTY(meta = (BindWidget))
+	UPanelWidget* LoginAttemptUI;
+
+	UPROPERTY(meta = (BindWidget))
+	UPanelWidget* LoginErrorUI;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* LoginErrorButton;
+	
+	/*
 	Main Menu
 	*/
 
@@ -73,6 +95,12 @@ private:
 	UButton* BackButtonJoinMenu;
 
 	UFUNCTION()
+	void OnLoginClicked();
+
+	UFUNCTION()
+	void OnLoginErrorClicked();
+
+	UFUNCTION()
 	void OnHostClicked();
 
 	UFUNCTION()
@@ -86,4 +114,9 @@ private:
     
     UFUNCTION()
     void HostServer();
+
+public:
+
+	void LoginComplete(bool bWasSuccessful, FString ErrorReason = "");
+	
 };
