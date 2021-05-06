@@ -16,8 +16,8 @@ bool UMainMenu::Initialize()
 	const bool Success = Super::Initialize();
 	if(!Success) return false;
 
-	if(!ensure(PopupButton!=nullptr)) return false;
-	PopupButton->OnClicked.AddDynamic(this, &UMainMenu::OnPopupButtonClicked);
+	if(!ensure(ErrorPopupButton!=nullptr)) return false;
+	ErrorPopupButton->OnClicked.AddDynamic(this, &UMainMenu::OnPopupButtonClicked);
 
 	if(!ensure(HostButton!=nullptr)) return false;
 	HostButton->OnClicked.AddDynamic(this, &UMainMenu::OnHostClicked);
@@ -29,19 +29,25 @@ bool UMainMenu::Initialize()
 	QuitButton->OnClicked.AddDynamic(this, &UMainMenu::ExitGame);
 	
 	if(!ensure(BackButtonHostMenu != nullptr)) return false;
-	BackButtonHostMenu->OnClicked.AddDynamic(this, &UMainMenu::OnBackClicked);
+	BackButtonHostMenu->OnClicked.AddDynamic(this, &UMainMenu::OnBackHostClicked);
 	
 	if(!ensure(HostButtonHostMenu != nullptr)) return false;
     HostButtonHostMenu->OnClicked.AddDynamic(this, &UMainMenu::HostServer);
 
 	if(!ensure(BackButtonJoinMenu != nullptr)) return false;
-	BackButtonJoinMenu->OnClicked.AddDynamic(this, &UMainMenu::OnBackClicked);
+	BackButtonJoinMenu->OnClicked.AddDynamic(this, &UMainMenu::OnBackJoinClicked);
+
+	if(!ensure(RefreshListButton != nullptr)) return false;
+	RefreshListButton->OnClicked.AddDynamic(this, &UMainMenu::OnRefreshListClicked);
 
 	if(!ensure(JoinButtonJoinMenu != nullptr)) return false;
 	JoinButtonJoinMenu->OnClicked.AddDynamic(this, &UMainMenu::JoinServer);
 
-	if(PopupUI != nullptr)
-		PopupUI->SetVisibility(ESlateVisibility::Hidden);
+	if(ErrorPopupUI != nullptr)
+		ErrorPopupUI->SetVisibility(ESlateVisibility::Hidden);
+
+	if(LoadingPopupUI != nullptr)
+		LoadingPopupUI->SetVisibility(ESlateVisibility::Hidden);
 
 	if(MenuSwitcher != nullptr && MainMenu != nullptr)
 		MenuSwitcher->SetActiveWidget(MainMenu);
@@ -60,8 +66,42 @@ void UMainMenu::ExitGame()
 
 void UMainMenu::OnPopupButtonClicked()
 {
-	if(PopupUI != nullptr)
-		PopupUI->SetVisibility(ESlateVisibility::Hidden);
+	if(ErrorPopupUI != nullptr)
+		ErrorPopupUI->SetVisibility(ESlateVisibility::Hidden);
+}
+
+
+void UMainMenu::ShowErrorMessage(FString ErrorMessage)
+{
+	if(LoadingPopupUI != nullptr)
+		LoadingPopupUI->SetVisibility(ESlateVisibility::Hidden);
+	
+	if(ErrorPopupUI != nullptr)
+	{
+		ErrorPopupUI->SetVisibility(ESlateVisibility::Visible);
+		
+		if(ErrorPopupText != nullptr)
+			ErrorPopupText->SetText(FText::FromString(ErrorMessage));
+	}
+}
+
+
+void UMainMenu::ShowLoadingMessage(FString LoadingMessage)
+{
+	if(LoadingPopupUI != nullptr)
+	{
+		LoadingPopupUI->SetVisibility(ESlateVisibility::Visible);
+
+		if(LoadingPopupText != nullptr)
+			LoadingPopupText->SetText(FText::FromString(LoadingMessage));
+	}
+}
+
+
+void UMainMenu::StopShowingLoadingMessage()
+{
+	if(LoadingPopupUI != nullptr)
+		LoadingPopupUI->SetVisibility(ESlateVisibility::Hidden);
 }
 
 
@@ -78,15 +118,12 @@ void UMainMenu::OnJoinClicked()
 	{
 		MenuSwitcher->SetActiveWidget(JoinMenu);
 		
-		if(LoadingIconJoinMenu != nullptr)
-			LoadingIconJoinMenu->SetVisibility(ESlateVisibility::HitTestInvisible);
-		
 		GameInstanceInterface->RefreshServerList();
 	}
 }
 
 
-void UMainMenu::OnBackClicked()
+void UMainMenu::OnBackHostClicked()
 {
 	if(MenuSwitcher!=nullptr && MainMenu!=nullptr)
 		MenuSwitcher->SetActiveWidget(MainMenu);
@@ -105,6 +142,25 @@ void UMainMenu::HostServer()
 			ServerName = EditServerName->GetText().ToString();
 		ServerName = (ServerName == "")? "My Server" : ServerName;
 		GameInstanceInterface->Host(ServerName);
+	}
+}
+
+
+void UMainMenu::OnBackJoinClicked()
+{
+	if(MenuSwitcher!=nullptr && MainMenu!=nullptr)
+		MenuSwitcher->SetActiveWidget(MainMenu);
+
+	if(GameInstanceInterface != nullptr)
+		GameInstanceInterface->CancelServerSearch();
+}
+
+
+void UMainMenu::OnRefreshListClicked()
+{
+	if(GameInstanceInterface != nullptr)
+	{
+		GameInstanceInterface->RefreshServerList();
 	}
 }
 
@@ -136,9 +192,6 @@ void UMainMenu::UpdateAllRows()
 
 void UMainMenu::SetServerList(TArray<FServerData> InServerList)
 {
-	if(LoadingIconJoinMenu != nullptr)
-		LoadingIconJoinMenu->SetVisibility(ESlateVisibility::Hidden);
-	
 	if(ServerList != nullptr)
 	{
 		ServerList->ClearChildren();
@@ -180,9 +233,6 @@ void UMainMenu::ClearServerList()
 {
 	if(ServerList != nullptr)
 		ServerList->ClearChildren();
-
-	if(LoadingIconJoinMenu != nullptr)
-		LoadingIconJoinMenu->SetVisibility(ESlateVisibility::Hidden);
 }
 
 

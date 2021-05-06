@@ -23,6 +23,8 @@ public:
 	
 	UZCustomGameInstance(const FObjectInitializer& ObjectInitializer);
 
+	virtual void Init() override;
+	
 	/*
 	Public functions to load menus from level blueprint
 	*/
@@ -51,6 +53,8 @@ public:
 
 	virtual void RefreshServerList() override;
 
+	virtual void CancelServerSearch() override;
+
 private:
 
 	/*
@@ -69,28 +73,26 @@ private:
 	TSubclassOf<UUserWidget> PauseMenuClass;
 
 	/*
-	Delegate Handles for OSS
-	*/
-
-	FDelegateHandle CreateSessionDelegate;
-
-	FDelegateHandle FindSessionDelegate;
-
-	FDelegateHandle JoinSessionDelegate;
-
-	/*
 	Delegate functions
 	*/
 
 	void OnCreateSessionComplete(FName SessionName, bool Success);
 
-	void OnFindSessionsComplete(bool Success, TSharedRef<class FOnlineSessionSearch> SessionSearchResults);
+	void OnFindSessionsComplete(bool Success);
 
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 
+	void OnDestroySessionComplete(FName SessionName, bool Success);
+
 	TSharedPtr<FOnlineSessionSearch> SessionSearch;
 
-	IOnlineSessionPtr SessionPtr;
+	IOnlineSessionPtr SessionInterface;
 
-	//void OnDestroySessionComplete(FName SessionName, bool Success);
+	/*
+	Helper functions
+	*/
+
+	void TriggerError(FString ErrorMessage);
+
+	void TriggerLoadingPopup(bool bShowPopup, FString Message = "");
 };

@@ -34,6 +34,32 @@ UZCustomGameInstance::UZCustomGameInstance(const FObjectInitializer& ObjectIniti
 }
 
 
+void UZCustomGameInstance::Init()
+{
+	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
+	if(Subsystem != nullptr)
+	{
+		SessionInterface = Subsystem->GetSessionInterface();
+		if(SessionInterface.IsValid())
+		{
+			SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UZCustomGameInstance::OnCreateSessionComplete);
+			SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UZCustomGameInstance::OnFindSessionsComplete);
+			SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UZCustomGameInstance::OnJoinSessionComplete);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Failed to get Session Interface"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to get Online Subsystem"));
+	}
+	
+	Super::Init();
+}
+
+
 void UZCustomGameInstance::LoadPlayerHUD()
 {
 	if(!PlayerHUDClass) return;
@@ -97,97 +123,87 @@ void UZCustomGameInstance::LoadPauseMenu()
 
 void UZCustomGameInstance::Host(FString ServerName)
 {
-	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
-	if(Subsystem != nullptr)
+	if(SessionInterface.IsValid())
 	{
-		IOnlineSessionPtr SessionInterface = Subsystem->GetSessionInterface();
-		if(SessionInterface.IsValid())
-		{			
-			CreateSessionDelegate = SessionInterface->AddOnCreateSessionCompleteDelegate_Handle(FOnCreateSessionComplete::FDelegate::CreateUObject(this, &UZCustomGameInstance::OnCreateSessionComplete));
-			
-			FOnlineSessionSettings SessionSettings;
+		FOnlineSessionSettings SessionSettings;
 
-			SessionSettings.NumPublicConnections = 4;
-			SessionSettings.bShouldAdvertise = true;
-			SessionSettings.bUsesPresence = false;
-			SessionSettings.bIsLANMatch = true;
-			
-			//SessionSettings.Set(SESSION_SETTINGS_SEARCH_KEY, SESSION_SETTINGS_SEARCH_VALUE, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
-			SessionSettings.Settings.Add(SESSION_SETTINGS_NAME_KEY, ServerName);
-			SessionSettings.Settings.Add(SESSION_SETTINGS_SEARCH_KEY, SESSION_SETTINGS_SEARCH_VALUE);
-			//SessionSettings.Set(SESSION_SETTINGS_NAME_KEY, ServerName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+		SessionSettings.NumPublicConnections = 4;
+		SessionSettings.bShouldAdvertise = true;
+		SessionSettings.bUsesPresence = false;
+		SessionSettings.bIsLANMatch = true;
+		
+		//SessionSettings.Set(SESSION_SETTINGS_SEARCH_KEY, SESSION_SETTINGS_SEARCH_VALUE, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+		SessionSettings.Settings.Add(SESSION_SETTINGS_NAME_KEY, ServerName);
+		SessionSettings.Settings.Add(SESSION_SETTINGS_SEARCH_KEY, SESSION_SETTINGS_SEARCH_VALUE);
+		//SessionSettings.Set(SESSION_SETTINGS_NAME_KEY, ServerName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 
-			if(!SessionInterface->CreateSession(0, SESSION_NAME, SessionSettings))
-			{
-				UE_LOG(LogTemp, Warning, TEXT("ERROR CREATING SESSION"));
-			}
+		if(!SessionInterface->CreateSession(0, SESSION_NAME, SessionSettings))
+		{
+			TriggerError("Error creating server");
 		}
 		else
 		{
-			UE_LOG(LogTemp, Warning, TEXT("ERROR CREATING SESSION"));
+			TriggerLoadingPopup(true, "Creating Server");
 		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ERROR CREATING SESSION"));
+		TriggerError("No OSS found");
 	}
 }
 
 
 void UZCustomGameInstance::Join(uint32 ServerIndex)
 {
-	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
-	if(Subsystem != nullptr)
+	if(SessionInterface.IsValid())
 	{
-		IOnlineSessionPtr SessionInterface = Subsystem->GetSessionInterface();
-		if(SessionInterface != nullptr)
+		SessionInterface->CancelFindSessions();
+		if(!SessionInterface->JoinSession(0, SESSION_NAME, SessionSearch->SearchResults[ServerIndex]))
 		{
-			JoinSessionDelegate = SessionInterface->AddOnJoinSessionCompleteDelegate_Handle(FOnJoinSessionComplete::FDelegate::CreateUObject(this,&UZCustomGameInstance::OnJoinSessionComplete));
-
-			if(!SessionInterface->JoinSession(0, SESSION_NAME, SessionSearch->SearchResults[ServerIndex]))
-			{
-				UE_LOG(LogTemp, Warning, TEXT("ERROR JOINING SESSION"));
-			}
+			TriggerError("Error joining server");
 		}
 		else
 		{
-			UE_LOG(LogTemp, Warning, TEXT("ERROR JOINING SESSION"));
+			TriggerLoadingPopup(true, "Joining Server");
 		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ERROR JOINING SESSION"));
+		TriggerError("No OSS found");
 	}
 }
 
 
 void UZCustomGameInstance::RefreshServerList()
 {
-	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
-	if(Subsystem != nullptr)
+	if(SessionInterface.IsValid())
 	{
-		IOnlineSessionPtr SessionInterface = Subsystem->GetSessionInterface();
-		if(SessionInterface != nullptr)
+		SessionSearch = MakeShared<FOnlineSessionSearch>();
+		SessionSearch->QuerySettings.SearchParams.Empty();
+		SessionSearch->QuerySettings.Set(SESSION_SETTINGS_SEARCH_KEY, SESSION_SETTINGS_SEARCH_VALUE, EOnlineComparisonOp::Equals);
+
+		if(!SessionInterface->FindSessions(0,SessionSearch.ToSharedRef()))
 		{
-			SessionSearch = MakeShared<FOnlineSessionSearch>();
-			SessionSearch->QuerySettings.SearchParams.Empty();
-			SessionSearch->QuerySettings.Set(SESSION_SETTINGS_SEARCH_KEY, SESSION_SETTINGS_SEARCH_VALUE, EOnlineComparisonOp::Equals);
-
-			FindSessionDelegate = SessionInterface->AddOnFindSessionsCompleteDelegate_Handle(FOnFindSessionsComplete::FDelegate::CreateUObject(this, &UZCustomGameInstance::OnFindSessionsComplete, SessionSearch.ToSharedRef()));
-
-			if(!SessionInterface->FindSessions(0,SessionSearch.ToSharedRef()))
-			{
-				UE_LOG(LogTemp, Warning, TEXT("1ERROR FINDING SESSION"));
-			}
+			TriggerError("Error finding servers");
 		}
 		else
 		{
-			UE_LOG(LogTemp, Warning, TEXT("2ERROR FINDING SESSION"));
+			TriggerLoadingPopup(true, "Finding Servers");
 		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("3ERROR FINDING SESSION"));
+		TriggerError("No OSS found");
+	}
+}
+
+
+void UZCustomGameInstance::CancelServerSearch()
+{
+	if(SessionInterface.IsValid())
+	{
+		SessionInterface->CancelFindSessions();
+		TriggerLoadingPopup(false);
 	}
 }
 
@@ -196,29 +212,23 @@ void UZCustomGameInstance::OnCreateSessionComplete(FName SessionName, bool Succe
 {
 	if(!Success)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Session creation failed"));
+		TriggerError("Failed to create server");
 	}
-
-	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
-	if(Subsystem != nullptr)
+	else
 	{
-		IOnlineSessionPtr SessionInterface = Subsystem->GetSessionInterface();
-		if(SessionInterface.IsValid())
-		{
-			SessionInterface->ClearOnCreateSessionCompleteDelegate_Handle(CreateSessionDelegate);
-		}
+		TriggerLoadingPopup(false);
+		
+		UWorld* World = GetWorld();
+		if(!ensure(World != nullptr)) return;
+
+		World->ServerTravel("/Game/Levels/TestMap?listen");
 	}
-	CreateSessionDelegate.Reset();
-
-	UWorld* World = GetWorld();
-	if(!ensure(World != nullptr)) return;
-
-	World->ServerTravel("/Game/Levels/TestMap?listen");
 }
 
 
-void UZCustomGameInstance::OnFindSessionsComplete(bool Success, TSharedRef<FOnlineSessionSearch> SessionSearchResults)
+void UZCustomGameInstance::OnFindSessionsComplete(bool Success)
 {
+	TriggerLoadingPopup(false);
 	if(Success && SessionSearch->SearchResults.Num() > 0)
 	{
 		TArray<FServerData> AllServerData;
@@ -251,7 +261,6 @@ void UZCustomGameInstance::OnFindSessionsComplete(bool Success, TSharedRef<FOnli
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("4NO SESSION FOUND"));
 		if(MainMenu != nullptr)
 		{
 			MainMenu->ClearServerList();
@@ -264,24 +273,56 @@ void UZCustomGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessi
 {
 	if(Result == EOnJoinSessionCompleteResult::Success)
 	{
-		FString ConnectInfo;
-		IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
-		if(Subsystem != nullptr)
+		if(SessionInterface.IsValid())
 		{
-			IOnlineSessionPtr SessionInterface = Subsystem->GetSessionInterface();
-			if(SessionInterface != nullptr)
+			FString ConnectInfo;
+			if(SessionInterface->GetResolvedConnectString(SESSION_NAME, ConnectInfo))
 			{
-				if(SessionInterface->GetResolvedConnectString(SESSION_NAME, ConnectInfo))
-				{
-					APlayerController* PC = GetFirstLocalPlayerController();
-					if(PC != nullptr)
-						PC->ClientTravel(ConnectInfo, ETravelType::TRAVEL_Absolute);
-				}
-				else
-				{
-					UE_LOG(LogTemp, Warning, TEXT("FAILED TO RESOLVE CONNECT STRING"));
-				}
+				TriggerLoadingPopup(false);
+				
+				APlayerController* PC = GetFirstLocalPlayerController();
+				if(PC != nullptr)
+					PC->ClientTravel(ConnectInfo, ETravelType::TRAVEL_Absolute);
+			}
+			else
+			{
+				TriggerError("Failed to resolve connection info");
 			}
 		}
+	}
+	else
+	{
+		TriggerError("Failed to join server");
+	}
+}
+
+
+void UZCustomGameInstance::OnDestroySessionComplete(FName SessionName, bool Success)
+{
+	if(!Success)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to Destroy Session (Call completed)"));
+	}
+}
+
+
+void UZCustomGameInstance::TriggerError(FString ErrorMessage)
+{
+	if(MainMenu != nullptr)
+	{
+		MainMenu->ShowErrorMessage(ErrorMessage);
+	}
+}
+
+
+void UZCustomGameInstance::TriggerLoadingPopup(bool bShowPopup, FString Message)
+{
+	if(MainMenu != nullptr)
+	{
+		if(bShowPopup)
+			MainMenu->ShowLoadingMessage(Message);
+
+		else
+			MainMenu->StopShowingLoadingMessage();
 	}
 }

@@ -47,26 +47,34 @@ private:
 	void ExitGame();
 
 	/*
-	Login Menu
+	Popup UI
 	*/
 
 	UPROPERTY(meta = (BindWidget))
-	UPanelWidget* PopupUI;
+	UPanelWidget* ErrorPopupUI;
 
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* PopupText;
+	UTextBlock* ErrorPopupText;
 
 	UPROPERTY(meta = (BindWidget))
-	UButton* PopupButton;
+	UButton* ErrorPopupButton;
 
 	UPROPERTY(meta = (BindWidget))
-	UWidget* ErrorIcon;
+	UPanelWidget* LoadingPopupUI;
 
 	UPROPERTY(meta = (BindWidget))
-	UWidget* LoadingIcon;
+	UTextBlock* LoadingPopupText;
 
 	UFUNCTION()
 	void OnPopupButtonClicked();
+
+public:
+
+	void ShowErrorMessage(FString ErrorMessage);
+
+	void ShowLoadingMessage(FString LoadingMessage);
+
+	void StopShowingLoadingMessage();
 	
 	/*
 	Main Menu
@@ -106,7 +114,7 @@ private:
 	UEditableText* EditServerName;
     
 	UFUNCTION()
-	void OnBackClicked();
+	void OnBackHostClicked();
     
 	UFUNCTION()
 	void HostServer();
@@ -122,16 +130,22 @@ private:
 	UButton* BackButtonJoinMenu;
 
 	UPROPERTY(meta = (BindWidget))
-	UButton* JoinButtonJoinMenu;
+	UButton* RefreshListButton;
 
 	UPROPERTY(meta = (BindWidget))
-	UWidget* LoadingIconJoinMenu;
+	UButton* JoinButtonJoinMenu;
 
 	UPROPERTY(meta = (BindWidget))
 	UScrollBox* ServerList;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UServerRow> ServerRowBPClass;
+
+	UFUNCTION()
+	void OnBackJoinClicked();
+
+	UFUNCTION()
+	void OnRefreshListClicked();
 
 	UFUNCTION()
 	void JoinServer();
