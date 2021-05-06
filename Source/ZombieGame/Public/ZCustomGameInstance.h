@@ -5,7 +5,10 @@
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
 #include "Interfaces/ZINT_GameInstance.h"
-
+#include "OnlineSubsystem.h"
+#include "Interfaces/OnlineIdentityInterface.h"
+#include "Interfaces/OnlineSessionInterface.h"
+#include "OnlineSessionSettings.h"
 #include "ZCustomGameInstance.generated.h"
 
 /**
@@ -20,6 +23,10 @@ public:
 	
 	UZCustomGameInstance(const FObjectInitializer& ObjectInitializer);
 
+	/*
+	Public functions to load menus from level blueprint
+	*/
+
 	UFUNCTION(BlueprintCallable)
 	void LoadPlayerHUD();
 
@@ -32,8 +39,25 @@ public:
 	UFUNCTION(BlueprintCallable)
     void LoadPauseMenu();
 
+	/*
+	Interface Functions
+	*/
+
+	//virtual void AttemptLogin() override;
+
+	virtual void Host(FString ServerName) override;
+
+	virtual void Join(uint32 ServerIndex) override;
+
+	virtual void RefreshServerList() override;
+
 private:
 
+	/*
+	Menu classes
+	*/
+
+	UPROPERTY()
 	class UMainMenu* MainMenu;
 
 	TSubclassOf<UUserWidget> PlayerHUDClass;
@@ -44,11 +68,29 @@ private:
 
 	TSubclassOf<UUserWidget> PauseMenuClass;
 
-	FDelegateHandle LoginDelegateHandle;
+	/*
+	Delegate Handles for OSS
+	*/
 
-	void OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId &UserId, const FString &Error);
+	FDelegateHandle CreateSessionDelegate;
 
-public:
+	FDelegateHandle FindSessionDelegate;
 
-	virtual void AttemptLogin() override;
+	FDelegateHandle JoinSessionDelegate;
+
+	/*
+	Delegate functions
+	*/
+
+	void OnCreateSessionComplete(FName SessionName, bool Success);
+
+	void OnFindSessionsComplete(bool Success, TSharedRef<class FOnlineSessionSearch> SessionSearchResults);
+
+	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+
+	TSharedPtr<FOnlineSessionSearch> SessionSearch;
+
+	IOnlineSessionPtr SessionPtr;
+
+	//void OnDestroySessionComplete(FName SessionName, bool Success);
 };

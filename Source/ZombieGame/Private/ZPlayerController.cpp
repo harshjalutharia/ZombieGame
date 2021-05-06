@@ -31,4 +31,3 @@ void AZPlayerController::PlayLocalFiringEffects_Implementation(TSubclassOf<UMati
         }
     }
 }
-

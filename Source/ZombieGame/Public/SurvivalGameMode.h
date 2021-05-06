@@ -13,5 +13,5 @@ UCLASS()
 class ZOMBIEGAME_API ASurvivalGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
-	
+
 };

@@ -23,5 +23,9 @@ class ZOMBIEGAME_API IZINT_GameInstance
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
-	virtual void AttemptLogin() = 0;
+	virtual void Host(FString ServerName) = 0;
+
+	virtual void Join(uint32 ServerIndex) = 0;
+
+	virtual void RefreshServerList() = 0;
 };

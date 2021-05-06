@@ -3,15 +3,25 @@
 #pragma once
 
 #include "CoreMinimal.h"
-
-
-#include "Components/EditableText.h"
 #include "MenuSystem/MenuWidget.h"
 #include "MainMenu.generated.h"
 
 class UButton;
 class UWidgetSwitcher;
 class UEditableText;
+class UScrollBox;
+class UTextBlock;
+
+USTRUCT()
+struct FServerData
+{
+	GENERATED_BODY()
+
+	FString ServerName;
+	uint8 CurrentPlayers;
+	uint8 MaxPlayers;
+	FString HostUsername;
+};
 
 /**
  * 
@@ -30,31 +40,39 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	UWidgetSwitcher* MenuSwitcher;
 
+	UPROPERTY(meta = (BindWidget))
+	UButton* QuitButton;
+	
+	UFUNCTION()
+	void ExitGame();
+
 	/*
 	Login Menu
 	*/
 
 	UPROPERTY(meta = (BindWidget))
-	UWidget* LoginMenu;
+	UPanelWidget* PopupUI;
 
 	UPROPERTY(meta = (BindWidget))
-	UButton* LoginButton;
+	UTextBlock* PopupText;
 
 	UPROPERTY(meta = (BindWidget))
-	UPanelWidget* LoginPopup;
+	UButton* PopupButton;
 
 	UPROPERTY(meta = (BindWidget))
-	UPanelWidget* LoginAttemptUI;
+	UWidget* ErrorIcon;
 
 	UPROPERTY(meta = (BindWidget))
-	UPanelWidget* LoginErrorUI;
+	UWidget* LoadingIcon;
 
-	UPROPERTY(meta = (BindWidget))
-	UButton* LoginErrorButton;
+	UFUNCTION()
+	void OnPopupButtonClicked();
 	
 	/*
 	Main Menu
 	*/
+
+private:
 
 	UPROPERTY(meta = (BindWidget))
 	UWidget* MainMenu;
@@ -65,9 +83,12 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	UButton* JoinButton;
 
-	UPROPERTY(meta = (BindWidget))
-	UButton* QuitButton;
+	UFUNCTION()
+	void OnHostClicked();
 
+	UFUNCTION()
+	void OnJoinClicked();
+	
 	/*
 	Host Menu
 	*/
@@ -83,7 +104,13 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	UEditableText* EditServerName;
-
+    
+	UFUNCTION()
+	void OnBackClicked();
+    
+	UFUNCTION()
+	void HostServer();
+	
 	/*
 	Join Menu
 	*/
@@ -94,29 +121,30 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	UButton* BackButtonJoinMenu;
 
-	UFUNCTION()
-	void OnLoginClicked();
+	UPROPERTY(meta = (BindWidget))
+	UButton* JoinButtonJoinMenu;
+
+	UPROPERTY(meta = (BindWidget))
+	UWidget* LoadingIconJoinMenu;
+
+	UPROPERTY(meta = (BindWidget))
+	UScrollBox* ServerList;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UServerRow> ServerRowBPClass;
 
 	UFUNCTION()
-	void OnLoginErrorClicked();
+	void JoinServer();
 
-	UFUNCTION()
-	void OnHostClicked();
+	TOptional<uint32> SelectedIndex;
 
-	UFUNCTION()
-    void OnJoinClicked();
-
-	UFUNCTION()
-    void ExitGame();
-    
-    UFUNCTION()
-    void OnBackClicked();
-    
-    UFUNCTION()
-    void HostServer();
-
+	void UpdateAllRows();
+	
 public:
 
-	void LoginComplete(bool bWasSuccessful, FString ErrorReason = "");
-	
+	void SetServerList(TArray<FServerData> InServerList);
+
+	void ClearServerList();
+
+	void SetSelectedIndex(uint32 Index);
 };
