@@ -9,7 +9,7 @@
 
 
 const static FName SESSION_NAME = TEXT("MyLocalSessionName");
-const static FName SESSION_SETTINGS_NAME_KEY = TEXT("Server Name");
+const static FName SESSION_SETTINGS_NAME_KEY = TEXT("ServerName");
 const static FName SESSION_SETTINGS_SEARCH_KEY = TEXT("CustomSessionSetting");
 const static FString SESSION_SETTINGS_SEARCH_VALUE = TEXT("CustomSettingValue");
 
@@ -132,10 +132,8 @@ void UZCustomGameInstance::Host(FString ServerName)
 		SessionSettings.bUsesPresence = false;
 		SessionSettings.bIsLANMatch = true;
 		
-		//SessionSettings.Set(SESSION_SETTINGS_SEARCH_KEY, SESSION_SETTINGS_SEARCH_VALUE, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
-		SessionSettings.Settings.Add(SESSION_SETTINGS_NAME_KEY, ServerName);
-		SessionSettings.Settings.Add(SESSION_SETTINGS_SEARCH_KEY, SESSION_SETTINGS_SEARCH_VALUE);
-		//SessionSettings.Set(SESSION_SETTINGS_NAME_KEY, ServerName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+		SessionSettings.Set(SESSION_SETTINGS_SEARCH_KEY, SESSION_SETTINGS_SEARCH_VALUE, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+		SessionSettings.Set(SESSION_SETTINGS_NAME_KEY, ServerName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 
 		if(!SessionInterface->CreateSession(0, SESSION_NAME, SessionSettings))
 		{

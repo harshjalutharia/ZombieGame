@@ -31,7 +31,7 @@ AZWeapon::AZWeapon()
 	MeshComp->SetCollisionProfileName(DROPPED_WEAPON_COLLISION);
 	MeshComp->SetSimulatePhysics(true);
 
-	SetReplicates(true);
+	bReplicates = true;
 }
 
 // Called when the game starts or when spawned

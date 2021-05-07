@@ -18,10 +18,7 @@ Recoil reset time scales to a max amount with the control yaw deviation from fir
 BUGS:
 1. If player jumps while sprinting and lets go of sprint key mid-jump, he will be locked in the state of sprinting whenever moving forward
 2. Full auto firing recoil is broken. Controlling the recoil still leads to the gun going down lower than expected
-3. Set breplicates directly in ZWeapon constructor
-4. Server name doesn't show up when searching for servers
-5. Player count is wrong when searching for servers
-6. Fix warning showing oss: No game present to join for session
+3. Fix warning showing oss: No game present to join for session
 
 TODO:
 1. Add an error popup widget in main menu

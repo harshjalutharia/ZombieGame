@@ -6,7 +6,6 @@
 #include "Engine/GameInstance.h"
 #include "Interfaces/ZINT_GameInstance.h"
 #include "OnlineSubsystem.h"
-#include "Interfaces/OnlineIdentityInterface.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include "OnlineSessionSettings.h"
 #include "ZCustomGameInstance.generated.h"
@@ -44,8 +43,6 @@ public:
 	/*
 	Interface Functions
 	*/
-
-	//virtual void AttemptLogin() override;
 
 	virtual void Host(FString ServerName) override;
 
