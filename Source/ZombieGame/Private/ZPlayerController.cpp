@@ -5,6 +5,7 @@
 #include "Blueprint/UserWidget.h"
 #include "ZPlayerCameraManager.h"
 #include "Interfaces/ZINT_PlayerHUD.h"
+#include "ZCustomGameInstance.h"
 
 
 AZPlayerController::AZPlayerController()
@@ -13,7 +14,7 @@ AZPlayerController::AZPlayerController()
 }
 
 
-void AZPlayerController::AssignPlayerHUD_Implementation(UUserWidget* NewHUD)
+void AZPlayerController::AssignPlayerHUD(IZINT_PlayerHUD* NewHUD)
 {
     PlayerHUD = NewHUD;
 }
@@ -23,11 +24,34 @@ void AZPlayerController::PlayLocalFiringEffects_Implementation(TSubclassOf<UMati
 {
     ClientStartCameraShake(FireCameraShake);
 
-    if(PlayerHUD && PlayerHUD->IsInViewport())
+    if(PlayerHUD != nullptr)
     {
-        if(PlayerHUD->GetClass()->ImplementsInterface(UZINT_PlayerHUD::StaticClass()))
-        {
-            IZINT_PlayerHUD::Execute_PlayCrosshairRecoil(PlayerHUD);
-        }
+        PlayerHUD->PlayCrosshairRecoil();
+    }
+}
+
+
+void AZPlayerController::BeginPlay()
+{
+    Super::BeginPlay();
+
+    GameInstance = GetGameInstance<UZCustomGameInstance>();
+    GameInstance->SetPlayerControllerInterface(this);
+}
+
+
+void AZPlayerController::SetupInputComponent()
+{
+    Super::SetupInputComponent();
+    
+    InputComponent->BindAction("PauseMenu",IE_Pressed, this, &AZPlayerController::ShowPauseMenu);
+}
+
+
+void AZPlayerController::ShowPauseMenu()
+{
+    if(GameInstance != nullptr)
+    {
+        GameInstance->ShowPauseMenu();
     }
 }

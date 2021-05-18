@@ -101,7 +101,7 @@ void UPlayerUI::PlayWeaponEquipAnimation()
 }
 
 
-void UPlayerUI::PlayCrosshairRecoil_Implementation()
+void UPlayerUI::PlayCrosshairRecoil()
 {
 	if(CrosshairRecoilAnimation)
 	{

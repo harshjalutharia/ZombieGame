@@ -5,45 +5,59 @@
 #include "Interfaces/ZINT_GameInstance.h"
 
 
-void UMenuWidget::Setup(bool bShowCursor, class IZINT_GameInstance* NewInterface)
+void UMenuWidget::DisplayMenu(bool bShowCursor)
 {
-	AddToViewport();
-	bIsFocusable = true;
-	
-	auto PC = GetOwningPlayer();
-	if(!ensure(PC!=nullptr)) return;
-
-	FInputModeUIOnly InputModeData;
-	InputModeData.SetWidgetToFocus(TakeWidget());
-
-	if(bShowCursor)
+	if(!IsInViewport())
 	{
-		InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-		PC->bShowMouseCursor = true;
-	}
-	else
-	{
-		InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::LockAlways);
-		PC->bShowMouseCursor = false;
-	}
+		AddToViewport();
+		bIsFocusable = true;
 
-	PC->SetInputMode(InputModeData);
-	GameInstanceInterface = NewInterface;
+		auto PC = GetOwningPlayer();
+		if(!ensure(PC!=nullptr)) return;
+
+		FInputModeUIOnly InputModeData;
+		InputModeData.SetWidgetToFocus(TakeWidget());
+
+		if(bShowCursor)
+		{
+			InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+			PC->bShowMouseCursor = true;
+		}
+		else
+		{
+			InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::LockAlways);
+			PC->bShowMouseCursor = false;
+		}
+
+		PC->SetInputMode(InputModeData);
+	}
 }
 
 
 void UMenuWidget::Teardown()
 {
-	RemoveFromViewport();
-	bIsFocusable = false;
+	if(IsInViewport())
+	{
+		RemoveFromParent();
+		bIsFocusable = false;
 
-	auto PC = GetOwningPlayer();
-	if(!ensure(PC!=nullptr)) return;
+		auto PC = GetOwningPlayer();
+		if(!ensure(PC!=nullptr)) return;
 
-	PC->bShowMouseCursor = false;
+		PC->bShowMouseCursor = false;
 
-	const FInputModeGameOnly InputModeData;
-	PC->SetInputMode(InputModeData);
+		const FInputModeGameOnly InputModeData;
+		PC->SetInputMode(InputModeData);
+	}
+}
+
+
+void UMenuWidget::Setup(class IZINT_GameInstance* NewInterface, bool bVisible, bool bShowCursor)
+{
+	GameInstanceInterface = NewInterface;
+	
+	if(bVisible)
+		DisplayMenu(bShowCursor);
 }
 
 
@@ -54,3 +68,7 @@ void UMenuWidget::OnLevelRemovedFromWorld(ULevel* InLevel, UWorld* InWorld)
 }
 
 
+void UMenuWidget::ShowMenu(bool bShowCursor)
+{
+	DisplayMenu(bShowCursor);
+}

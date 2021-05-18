@@ -41,6 +41,23 @@ public:
     void LoadPauseMenu();
 
 	/*
+	Public functions to load menus
+	*/
+
+private:
+
+	UPROPERTY()
+	class UMenuWidget* PauseMenu;
+
+	class IZINT_ZPlayerController* PlayerControllerInterface;
+
+public:
+
+	void ShowPauseMenu();
+
+	void SetPlayerControllerInterface(class IZINT_ZPlayerController* InPlayerControllerInterface);
+
+	/*
 	Interface Functions
 	*/
 
@@ -70,6 +87,25 @@ private:
 	TSubclassOf<UUserWidget> PauseMenuClass;
 
 	/*
+	Delegate Handles
+	*/
+
+	FOnCreateSessionCompleteDelegate OnCreateSessionCompleteDelegate;
+
+	FOnFindSessionsCompleteDelegate OnFindSessionsCompleteDelegate;
+
+	FOnJoinSessionCompleteDelegate OnJoinSessionCompleteDelegate;
+
+	FOnDestroySessionCompleteDelegate OnDestroySessionCompleteDelegate;
+
+	FDelegateHandle CreateSessionCompleteDelegateHandle;
+
+	FDelegateHandle FindSessionsCompleteDelegateHandle;
+
+	FDelegateHandle JoinSessionCompleteDelegateHandle;
+
+	FDelegateHandle DestroySessionCompleteDelegateHandle;
+	/*
 	Delegate functions
 	*/
 
@@ -81,9 +117,15 @@ private:
 
 	void OnDestroySessionComplete(FName SessionName, bool Success);
 
+	/*
+	Variables
+	*/
+
 	TSharedPtr<FOnlineSessionSearch> SessionSearch;
 
 	IOnlineSessionPtr SessionInterface;
+
+	bool bFindingSessions;
 
 	/*
 	Helper functions
@@ -92,4 +134,8 @@ private:
 	void TriggerError(FString ErrorMessage);
 
 	void TriggerLoadingPopup(bool bShowPopup, FString Message = "");
+
+	void DestroySessionCaller();
+
+	
 };

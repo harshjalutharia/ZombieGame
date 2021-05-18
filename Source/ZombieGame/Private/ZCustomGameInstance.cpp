@@ -5,6 +5,7 @@
 #include "MenuSystem/MenuWidget.h"
 #include "MenuSystem/MainMenu.h"
 #include "Blueprint/UserWidget.h"
+#include "UI/PlayerUI.h"
 #include "Interfaces/ZINT_ZPlayerController.h"
 
 
@@ -31,6 +32,13 @@ UZCustomGameInstance::UZCustomGameInstance(const FObjectInitializer& ObjectIniti
 	ConstructorHelpers::FClassFinder<UUserWidget>PauseMenuWidgetBPClass(TEXT("/Game/MenuSystem/WBP_PauseMenu"));
 	if(!PauseMenuWidgetBPClass.Class) return;
 	PauseMenuClass = PauseMenuWidgetBPClass.Class;
+
+	OnCreateSessionCompleteDelegate = FOnCreateSessionCompleteDelegate::CreateUObject(this, &UZCustomGameInstance::OnCreateSessionComplete);
+	OnFindSessionsCompleteDelegate = FOnFindSessionsCompleteDelegate::CreateUObject(this, &UZCustomGameInstance::OnFindSessionsComplete);
+	OnJoinSessionCompleteDelegate = FOnJoinSessionCompleteDelegate::CreateUObject(this, &UZCustomGameInstance::OnJoinSessionComplete);
+	OnDestroySessionCompleteDelegate = FOnDestroySessionCompleteDelegate::CreateUObject(this, &UZCustomGameInstance::OnDestroySessionComplete);
+
+	bFindingSessions = false;
 }
 
 
@@ -40,16 +48,6 @@ void UZCustomGameInstance::Init()
 	if(Subsystem != nullptr)
 	{
 		SessionInterface = Subsystem->GetSessionInterface();
-		if(SessionInterface.IsValid())
-		{
-			SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UZCustomGameInstance::OnCreateSessionComplete);
-			SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UZCustomGameInstance::OnFindSessionsComplete);
-			SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UZCustomGameInstance::OnJoinSessionComplete);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("Failed to get Session Interface"));
-		}
 	}
 	else
 	{
@@ -67,15 +65,20 @@ void UZCustomGameInstance::LoadPlayerHUD()
 	APlayerController* PC = GetFirstLocalPlayerController(GetWorld());
 	if(!ensure(PC!=nullptr)) return;
 
-	UUserWidget* PlayerHUD = CreateWidget(PC,PlayerHUDClass);
+	UPlayerUI* PlayerHUD = CreateWidget<UPlayerUI>(PC,PlayerHUDClass);
 	if(!ensure(PlayerHUD!=nullptr)) return;
 
 	PlayerHUD->AddToViewport();
 
-	if(PC->GetClass()->ImplementsInterface(UZINT_ZPlayerController::StaticClass()))
+	if(PlayerControllerInterface != nullptr)
+	{
+		PlayerControllerInterface->AssignPlayerHUD(PlayerHUD);
+	}
+
+	/*if(PC->GetClass()->ImplementsInterface(UZINT_ZPlayerController::StaticClass()))
 	{
 		IZINT_ZPlayerController::Execute_AssignPlayerHUD(PC,PlayerHUD);
-	}
+	}*/
 }
 
 
@@ -89,7 +92,8 @@ void UZCustomGameInstance::LoadMainMenu()
 	MainMenu = CreateWidget<UMainMenu>(PC,MainMenuClass);
 	if(!ensure(MainMenu!=nullptr)) return;
 
-	MainMenu->Setup(true, this);
+	MainMenu->Setup(this, true, true);
+	DestroySessionCaller();
 }
 
 
@@ -103,21 +107,43 @@ void UZCustomGameInstance::LoadLoadingScreen()
 	UMenuWidget* LoadingScreen = CreateWidget<UMenuWidget>(PC,LoadingScreenClass);
 	if(!ensure(LoadingScreen!=nullptr)) return;
 
-	LoadingScreen->Setup(false);
+	LoadingScreen->Setup(this, true, false);
 }
 
 
 void UZCustomGameInstance::LoadPauseMenu()
 {
+	if(PauseMenu != nullptr)
+		return;
+	
 	if(!PauseMenuClass) return;
 
 	APlayerController* PC = GetFirstLocalPlayerController(GetWorld());
 	if(!ensure(PC!=nullptr)) return;
 
-	UMenuWidget* PauseMenu = CreateWidget<UMenuWidget>(PC,PauseMenuClass);
+	PauseMenu = CreateWidget<UMenuWidget>(PC,PauseMenuClass);
 	if(!ensure(PauseMenu!=nullptr)) return;
 
-	PauseMenu->Setup(true, this);
+	PauseMenu->Setup(this, true, true);
+}
+
+
+void UZCustomGameInstance::ShowPauseMenu()
+{
+	if(PauseMenu != nullptr)
+	{
+		PauseMenu->ShowMenu();
+	}
+	else
+	{
+		LoadPauseMenu();
+	}
+}
+
+
+void UZCustomGameInstance::SetPlayerControllerInterface(IZINT_ZPlayerController* InPlayerControllerInterface)
+{
+	PlayerControllerInterface = InPlayerControllerInterface;
 }
 
 
@@ -135,6 +161,7 @@ void UZCustomGameInstance::Host(FString ServerName)
 		SessionSettings.Set(SESSION_SETTINGS_SEARCH_KEY, SESSION_SETTINGS_SEARCH_VALUE, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 		SessionSettings.Set(SESSION_SETTINGS_NAME_KEY, ServerName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 
+		CreateSessionCompleteDelegateHandle = SessionInterface->AddOnCreateSessionCompleteDelegate_Handle(OnCreateSessionCompleteDelegate);
 		if(!SessionInterface->CreateSession(0, SESSION_NAME, SessionSettings))
 		{
 			TriggerError("Error creating server");
@@ -156,6 +183,7 @@ void UZCustomGameInstance::Join(uint32 ServerIndex)
 	if(SessionInterface.IsValid())
 	{
 		SessionInterface->CancelFindSessions();
+		JoinSessionCompleteDelegateHandle = SessionInterface->AddOnJoinSessionCompleteDelegate_Handle(OnJoinSessionCompleteDelegate);
 		if(!SessionInterface->JoinSession(0, SESSION_NAME, SessionSearch->SearchResults[ServerIndex]))
 		{
 			TriggerError("Error joining server");
@@ -176,17 +204,24 @@ void UZCustomGameInstance::RefreshServerList()
 {
 	if(SessionInterface.IsValid())
 	{
-		SessionSearch = MakeShared<FOnlineSessionSearch>();
-		SessionSearch->QuerySettings.SearchParams.Empty();
-		SessionSearch->QuerySettings.Set(SESSION_SETTINGS_SEARCH_KEY, SESSION_SETTINGS_SEARCH_VALUE, EOnlineComparisonOp::Equals);
+		if(!bFindingSessions)
+		{
+			bFindingSessions = true;
+		
+			SessionSearch = MakeShared<FOnlineSessionSearch>();
+			SessionSearch->QuerySettings.SearchParams.Empty();
+			SessionSearch->QuerySettings.Set(SESSION_SETTINGS_SEARCH_KEY, SESSION_SETTINGS_SEARCH_VALUE, EOnlineComparisonOp::Equals);
 
-		if(!SessionInterface->FindSessions(0,SessionSearch.ToSharedRef()))
-		{
-			TriggerError("Error finding servers");
-		}
-		else
-		{
-			TriggerLoadingPopup(true, "Finding Servers");
+			FindSessionsCompleteDelegateHandle = SessionInterface->AddOnFindSessionsCompleteDelegate_Handle(OnFindSessionsCompleteDelegate);
+			if(!SessionInterface->FindSessions(0,SessionSearch.ToSharedRef()))
+			{
+				bFindingSessions = false;
+				TriggerError("Error finding servers");
+			}
+			else
+			{
+				TriggerLoadingPopup(true, "Finding Servers");
+			}
 		}
 	}
 	else
@@ -202,6 +237,7 @@ void UZCustomGameInstance::CancelServerSearch()
 	{
 		SessionInterface->CancelFindSessions();
 		TriggerLoadingPopup(false);
+		bFindingSessions = false;
 	}
 }
 
@@ -221,12 +257,18 @@ void UZCustomGameInstance::OnCreateSessionComplete(FName SessionName, bool Succe
 
 		World->ServerTravel("/Game/Levels/TestMap?listen");
 	}
+	
+	if(SessionInterface.IsValid())
+	{
+		SessionInterface->ClearOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegateHandle);
+	}
 }
 
 
 void UZCustomGameInstance::OnFindSessionsComplete(bool Success)
 {
 	TriggerLoadingPopup(false);
+	bFindingSessions = false;
 	if(Success && SessionSearch->SearchResults.Num() > 0)
 	{
 		TArray<FServerData> AllServerData;
@@ -264,6 +306,11 @@ void UZCustomGameInstance::OnFindSessionsComplete(bool Success)
 			MainMenu->ClearServerList();
 		}
 	}
+
+	if(SessionInterface.IsValid())
+	{
+		SessionInterface->ClearOnFindSessionsCompleteDelegate_Handle(FindSessionsCompleteDelegateHandle);
+	}
 }
 
 
@@ -291,6 +338,11 @@ void UZCustomGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessi
 	else
 	{
 		TriggerError("Failed to join server");
+	}
+
+	if(SessionInterface.IsValid())
+	{
+		SessionInterface->ClearOnJoinSessionCompleteDelegate_Handle(JoinSessionCompleteDelegateHandle);
 	}
 }
 
@@ -323,4 +375,11 @@ void UZCustomGameInstance::TriggerLoadingPopup(bool bShowPopup, FString Message)
 		else
 			MainMenu->StopShowingLoadingMessage();
 	}
+}
+
+
+void UZCustomGameInstance::DestroySessionCaller()
+{
+	if(SessionInterface->GetNamedSession(SESSION_NAME) != nullptr)
+		SessionInterface->DestroySession(SESSION_NAME);
 }

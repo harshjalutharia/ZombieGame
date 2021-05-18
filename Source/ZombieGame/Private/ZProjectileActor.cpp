@@ -22,7 +22,7 @@ AZProjectileActor::AZProjectileActor()
 
 	ExplosionRadialForceStrength = 500.f;
 
-	SetReplicates(true);
+	bReplicates = true;
 	SetReplicatingMovement(true);
 }
 

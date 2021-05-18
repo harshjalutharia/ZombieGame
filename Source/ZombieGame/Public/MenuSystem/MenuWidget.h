@@ -17,11 +17,15 @@ class ZOMBIEGAME_API UMenuWidget : public UUserWidget
 protected:
 	class IZINT_GameInstance* GameInstanceInterface;
 
-public:
-	
-	void Setup(bool bShowCursor, class IZINT_GameInstance* NewInterface = nullptr);
+	void DisplayMenu(bool bShowCursor);
 
 	void Teardown();
 
+public:
+	
+	void Setup(class IZINT_GameInstance* NewInterface, bool bVisible, bool bShowCursor = false);
+
 	virtual void OnLevelRemovedFromWorld(ULevel* InLevel, UWorld* InWorld) override;
+
+	void ShowMenu(bool bShowCursor = false);
 };

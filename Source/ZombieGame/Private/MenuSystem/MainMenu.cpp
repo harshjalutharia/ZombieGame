@@ -134,9 +134,6 @@ void UMainMenu::HostServer()
 {
 	if(GameInstanceInterface != nullptr)
 	{
-		if(HostButtonHostMenu != nullptr)
-			HostButton->SetIsEnabled(false);
-		
 		FString ServerName = "";
 		if(EditServerName != nullptr)
 			ServerName = EditServerName->GetText().ToString();

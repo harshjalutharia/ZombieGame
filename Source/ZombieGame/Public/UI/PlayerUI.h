@@ -72,6 +72,6 @@ protected:
 
 public:
 
-	virtual void PlayCrosshairRecoil_Implementation() override;
+	virtual void PlayCrosshairRecoil() override;
 	
 };

@@ -375,9 +375,6 @@ void APlayerCharacter::SetCrouching(bool NewCrouching)
 
 void APlayerCharacter::SetSprinting(bool NewSprinting)
 {
-	if(IsJumping())
-		return;
-	
 	if(!HasAuthority())
 	{
 		ServerSetSprinting(NewSprinting);
