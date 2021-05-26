@@ -2,8 +2,8 @@
 
 
 #include "ZCustomGameInstance.h"
-#include "MenuSystem/MenuWidget.h"
 #include "MenuSystem/MainMenu.h"
+#include "MenuSystem/LobbyMenu.h"
 #include "MenuSystem/FindGamesMenu.h"
 #include "Blueprint/UserWidget.h"
 #include "UI/PlayerUI.h"
@@ -34,6 +34,14 @@ UZCustomGameInstance::UZCustomGameInstance(const FObjectInitializer& ObjectIniti
 	ConstructorHelpers::FClassFinder<UUserWidget>PauseMenuWidgetBPClass(TEXT("/Game/MenuSystem/WBP_PauseMenu"));
 	if(!PauseMenuWidgetBPClass.Class) return;
 	PauseMenuClass = PauseMenuWidgetBPClass.Class;
+
+	ConstructorHelpers::FClassFinder<UUserWidget>LobbyHostMenuWidgetBPClass(TEXT("/Game/MenuSystem/WBP_LobbyHostMenu"));
+	if(!LobbyHostMenuWidgetBPClass.Class) return;
+	LobbyHostMenuClass = LobbyHostMenuWidgetBPClass.Class;
+
+	ConstructorHelpers::FClassFinder<UUserWidget>LobbyClientMenuWidgetBPClass(TEXT("/Game/MenuSystem/WBP_LobbyClientMenu"));
+	if(!LobbyClientMenuWidgetBPClass.Class) return;
+	LobbyClientMenuClass = LobbyClientMenuWidgetBPClass.Class;
 	
 	OnCreateSessionCompleteDelegate = FOnCreateSessionCompleteDelegate::CreateUObject(this, &UZCustomGameInstance::OnCreateSessionComplete);
 	OnFindSessionsCompleteDelegate = FOnFindSessionsCompleteDelegate::CreateUObject(this, &UZCustomGameInstance::OnFindSessionsComplete);
@@ -136,6 +144,36 @@ void UZCustomGameInstance::LoadPauseMenu()
 
 	PauseMenu->Setup(this);
 	PauseMenu->ShowMenu(true);
+}
+
+
+void UZCustomGameInstance::LoadLobbyHostMenu()
+{
+	if(!LobbyHostMenuClass) return;
+
+	APlayerController* PC = GetFirstLocalPlayerController(GetWorld());
+	if(!ensure(PC!=nullptr)) return;
+
+	LobbyHostMenu = CreateWidget<ULobbyMenu>(PC,LobbyHostMenuClass);
+	if(!ensure(LobbyHostMenu!=nullptr)) return;
+
+	LobbyHostMenu->Setup(this);
+	LobbyHostMenu->ShowMenu(true);
+}
+
+
+void UZCustomGameInstance::LoadLobbyClientMenu()
+{
+	if(!LobbyClientMenuClass) return;
+
+	APlayerController* PC = GetFirstLocalPlayerController(GetWorld());
+	if(!ensure(PC!=nullptr)) return;
+
+	LobbyClientMenu = CreateWidget<ULobbyMenu>(PC,LobbyClientMenuClass);
+	if(!ensure(LobbyClientMenu!=nullptr)) return;
+
+	LobbyClientMenu->Setup(this);
+	LobbyClientMenu->ShowMenu(true);
 }
 
 
@@ -302,7 +340,7 @@ void UZCustomGameInstance::OnCreateSessionComplete(FName SessionName, bool Succe
 		UWorld* World = GetWorld();
 		if(!ensure(World != nullptr)) return;
 
-		World->ServerTravel("/Game/Levels/TestMap?listen");
+		World->ServerTravel("/Game/Levels/LobbyLevel?listen");
 	}
 	
 	if(SessionInterface.IsValid())

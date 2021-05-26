@@ -64,14 +64,13 @@ public:
 	UFUNCTION(BlueprintCallable)
     void LoadPauseMenu();
 
-	/*
-	Public functions to load menus
-	*/
+	UFUNCTION(BlueprintCallable)
+	void LoadLobbyHostMenu();
 
+	UFUNCTION(BlueprintCallable)
+	void LoadLobbyClientMenu();
+	
 private:
-
-	UPROPERTY()
-	class UMenuWidget* PauseMenu;
 
 	/*
 	Interface Functions
@@ -101,12 +100,23 @@ private:
 	class UMainMenu* MainMenu;
 
 	UPROPERTY()
+	class UMenuWidget* PauseMenu;
+
+	UPROPERTY()
 	class UFindGamesMenu* FindGamesMenu;
+
+	UPROPERTY()
+	class ULobbyMenu* LobbyHostMenu;
+
+	UPROPERTY()
+	class ULobbyMenu* LobbyClientMenu;
 
 	TSubclassOf<UUserWidget> PlayerHUDClass;
 	TSubclassOf<UUserWidget> MainMenuClass;
 	TSubclassOf<UUserWidget> LoadingScreenClass;
 	TSubclassOf<UUserWidget> PauseMenuClass;
+	TSubclassOf<UUserWidget> LobbyHostMenuClass;
+	TSubclassOf<UUserWidget> LobbyClientMenuClass;
 
 	/*
 	Delegate Handles
@@ -148,8 +158,6 @@ private:
 	/*
 	Helper functions
 	*/
-
-private:
 
 	void TriggerError(FString ErrorMessage);
 
