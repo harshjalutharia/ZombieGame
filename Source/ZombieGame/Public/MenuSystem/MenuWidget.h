@@ -22,10 +22,10 @@ protected:
 	void Teardown();
 
 public:
-	
-	void Setup(class IZINT_GameInstance* NewInterface, bool bVisible, bool bShowCursor = false);
 
 	virtual void OnLevelRemovedFromWorld(ULevel* InLevel, UWorld* InWorld) override;
+
+	virtual void Setup(class IZINT_GameInstance* NewInterface);
 
 	void ShowMenu(bool bShowCursor = false);
 };

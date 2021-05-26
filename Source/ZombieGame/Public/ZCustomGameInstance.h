@@ -8,7 +8,31 @@
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include "OnlineSessionSettings.h"
+#include "ZombieGame/ZEnums.h"
 #include "ZCustomGameInstance.generated.h"
+
+USTRUCT()
+struct FCustomGameMode
+{
+	GENERATED_BODY()
+
+	FString Name;
+	FString Description;
+	FString URL;
+};
+
+USTRUCT()
+struct FGameMap
+{
+	GENERATED_BODY()
+
+	FString Name;
+	FString Description;
+	FString URL;
+
+	UPROPERTY()
+	UTexture2D* Icon;
+};
 
 /**
  * 
@@ -49,19 +73,11 @@ private:
 	UPROPERTY()
 	class UMenuWidget* PauseMenu;
 
-	class IZINT_ZPlayerController* PlayerControllerInterface;
-
-public:
-
-	void ShowPauseMenu();
-
-	void SetPlayerControllerInterface(class IZINT_ZPlayerController* InPlayerControllerInterface);
-
 	/*
 	Interface Functions
 	*/
 
-	virtual void Host(FString ServerName) override;
+	virtual void Host(FString ServerName, uint8 GameModeIndex, uint8 MapIndex, uint8 MaxPlayers, bool bLanMatch) override;
 
 	virtual void Join(uint32 ServerIndex) override;
 
@@ -69,7 +85,13 @@ public:
 
 	virtual void CancelServerSearch() override;
 
-private:
+	virtual void ShowPauseMenu_Implementation() override;
+
+	virtual void GetAllGameModesAndMaps(TArray<FString>& InAllGameModes, TArray<FString>& InAllMaps) override;
+
+	virtual uint8 GetMaxAllowedPlayers() override;
+
+	virtual void SetFindGamesMenu(UFindGamesMenu* InFindGamesMenu) override;
 
 	/*
 	Menu classes
@@ -78,12 +100,12 @@ private:
 	UPROPERTY()
 	class UMainMenu* MainMenu;
 
+	UPROPERTY()
+	class UFindGamesMenu* FindGamesMenu;
+
 	TSubclassOf<UUserWidget> PlayerHUDClass;
-
 	TSubclassOf<UUserWidget> MainMenuClass;
-
 	TSubclassOf<UUserWidget> LoadingScreenClass;
-
 	TSubclassOf<UUserWidget> PauseMenuClass;
 
 	/*
@@ -91,30 +113,22 @@ private:
 	*/
 
 	FOnCreateSessionCompleteDelegate OnCreateSessionCompleteDelegate;
-
 	FOnFindSessionsCompleteDelegate OnFindSessionsCompleteDelegate;
-
 	FOnJoinSessionCompleteDelegate OnJoinSessionCompleteDelegate;
-
 	FOnDestroySessionCompleteDelegate OnDestroySessionCompleteDelegate;
 
 	FDelegateHandle CreateSessionCompleteDelegateHandle;
-
 	FDelegateHandle FindSessionsCompleteDelegateHandle;
-
 	FDelegateHandle JoinSessionCompleteDelegateHandle;
-
 	FDelegateHandle DestroySessionCompleteDelegateHandle;
+	
 	/*
 	Delegate functions
 	*/
 
 	void OnCreateSessionComplete(FName SessionName, bool Success);
-
 	void OnFindSessionsComplete(bool Success);
-
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
-
 	void OnDestroySessionComplete(FName SessionName, bool Success);
 
 	/*
@@ -127,15 +141,19 @@ private:
 
 	bool bFindingSessions;
 
+	TArray<FCustomGameMode> AllGameModes;
+
+	TArray<FGameMap> AllMaps;
+
 	/*
 	Helper functions
 	*/
+
+private:
 
 	void TriggerError(FString ErrorMessage);
 
 	void TriggerLoadingPopup(bool bShowPopup, FString Message = "");
 
 	void DestroySessionCaller();
-
-	
 };

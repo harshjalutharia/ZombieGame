@@ -7,7 +7,7 @@
 #include "ServerRow.generated.h"
 
 
-class UMainMenu;
+class UFindGamesMenu;
 class UTextBlock;
 class UButton;
 
@@ -21,7 +21,7 @@ class ZOMBIEGAME_API UServerRow : public UUserWidget
 	GENERATED_BODY()
 
 	UPROPERTY()
-	UMainMenu* ParentMenu;
+	UFindGamesMenu* ParentMenu;
 
 	uint32 Index;
 
@@ -39,7 +39,7 @@ class ZOMBIEGAME_API UServerRow : public UUserWidget
 
 public:
 
-	void Setup(UMainMenu* InParent, uint32 InIndex, FText InServerName, FText InHostUsername, uint8 InCurrentPlayers, uint8 InMaxPlayers);
+	void Setup(UFindGamesMenu* InParent, uint32 InIndex, FText InServerName, FText InHostUsername, uint8 InCurrentPlayers, uint8 InMaxPlayers);
 
 	void SetSelected(bool IsSelected);
 

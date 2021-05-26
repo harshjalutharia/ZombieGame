@@ -4,8 +4,7 @@
 #include "ZPlayerController.h"
 #include "Blueprint/UserWidget.h"
 #include "ZPlayerCameraManager.h"
-#include "Interfaces/ZINT_PlayerHUD.h"
-#include "ZCustomGameInstance.h"
+#include "Interfaces/ZINT_GameInstance.h"
 
 
 AZPlayerController::AZPlayerController()
@@ -14,7 +13,7 @@ AZPlayerController::AZPlayerController()
 }
 
 
-void AZPlayerController::AssignPlayerHUD(IZINT_PlayerHUD* NewHUD)
+void AZPlayerController::AssignPlayerHUD_Implementation(UPlayerUI* NewHUD)
 {
     PlayerHUD = NewHUD;
 }
@@ -34,9 +33,6 @@ void AZPlayerController::PlayLocalFiringEffects_Implementation(TSubclassOf<UMati
 void AZPlayerController::BeginPlay()
 {
     Super::BeginPlay();
-
-    GameInstance = GetGameInstance<UZCustomGameInstance>();
-    GameInstance->SetPlayerControllerInterface(this);
 }
 
 
@@ -50,8 +46,8 @@ void AZPlayerController::SetupInputComponent()
 
 void AZPlayerController::ShowPauseMenu()
 {
-    if(GameInstance != nullptr)
+    if(GetGameInstance()->GetClass()->ImplementsInterface(UZINT_GameInstance::StaticClass()))
     {
-        GameInstance->ShowPauseMenu();
+        IZINT_GameInstance::Execute_ShowPauseMenu(GetGameInstance());
     }
 }

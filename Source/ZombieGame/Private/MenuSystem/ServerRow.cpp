@@ -2,12 +2,12 @@
 
 
 #include "MenuSystem/ServerRow.h"
-#include "MenuSystem/MainMenu.h"
+#include "MenuSystem/FindGamesMenu.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 
 
-void UServerRow::Setup(UMainMenu* InParent, uint32 InIndex, FText InServerName, FText InHostUsername,
+void UServerRow::Setup(UFindGamesMenu* InParent, uint32 InIndex, FText InServerName, FText InHostUsername,
 	uint8 InCurrentPlayers, uint8 InMaxPlayers)
 {
 	ParentMenu = InParent;

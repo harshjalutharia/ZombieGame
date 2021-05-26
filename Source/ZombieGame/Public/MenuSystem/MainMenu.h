@@ -4,24 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "MenuSystem/MenuWidget.h"
+#include "ZombieGame/ZServerDataStruct.h"
 #include "MainMenu.generated.h"
 
 class UButton;
 class UWidgetSwitcher;
+class UOverlay;
 class UEditableText;
 class UScrollBox;
 class UTextBlock;
-
-USTRUCT()
-struct FServerData
-{
-	GENERATED_BODY()
-
-	FString ServerName;
-	uint8 CurrentPlayers;
-	uint8 MaxPlayers;
-	FString HostUsername;
-};
 
 /**
  * 
@@ -35,16 +26,168 @@ protected:
 
 	virtual bool Initialize() override;
 
+public:
+
+	virtual void Setup(IZINT_GameInstance* NewInterface) override;
+
 private:
 
 	UPROPERTY(meta = (BindWidget))
 	UWidgetSwitcher* MenuSwitcher;
 
 	UPROPERTY(meta = (BindWidget))
+	UWidgetSwitcher* DetailsWindowSwitcher;
+
+	UPROPERTY(meta = (BindWidget))
+	UWidget* EmptyMenu;
+
+	UPROPERTY(meta = (BindWidget))
 	UButton* QuitButton;
 	
 	UFUNCTION()
 	void ExitGame();
+
+	/*
+	 *START MENU
+	 */
+
+	UPROPERTY(meta = (BindWidget))
+	UWidget* StartMenu;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* PlayButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* CustomizeButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* OptionsButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* CreditsButton;
+
+	UFUNCTION()
+	void OnPlayButtonClicked();
+
+	UFUNCTION()
+	void OnCustomizeButtonClicked();
+
+	UFUNCTION()
+	void OnOptionsButtonClicked();
+
+	UFUNCTION()
+	void OnCreditsButtonClicked();
+
+	void ShowStartMenu();
+
+	/*
+	 *PLAY MENU
+	 */
+
+	UPROPERTY(meta = (BindWidget))
+	UWidget* PlayMenu;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* HostGameButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* FindGamesButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* BackButtonPlayMenu;
+
+	UFUNCTION()
+	void OnHostGameButtonClicked();
+
+	UFUNCTION()
+	void OnFindGamesButtonClicked();
+
+	UFUNCTION()
+	void OnBackButtonClicked();
+
+	/*
+	 *CUSTOMIZE MENU
+	 */
+
+	UPROPERTY(meta = (BindWidget))
+	UWidget* CustomizeMenu;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* FaceButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* BodyButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* BackButtonCustomizeMenu;
+
+	UFUNCTION()
+	void OnFaceButtonClicked();
+
+	UFUNCTION()
+	void OnBodyButtonClicked();
+	
+	/*
+	 *OPTIONS MENU
+	 */
+	
+	UPROPERTY(meta = (BindWidget))
+	UWidget* OptionsMenu;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* GameplayButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* AudioButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* VideoButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* ControlsButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* BackButtonOptionsMenu;
+
+	UFUNCTION()
+	void OnGameplayButtonClicked();
+
+	UFUNCTION()
+	void OnAudioButtonClicked();
+
+	UFUNCTION()
+	void OnVideoButtonClicked();
+
+	UFUNCTION()
+	void OnControlsButtonClicked();
+
+	/*
+	 *CREDITS MENU
+	 */
+
+	UPROPERTY(meta = (BindWidget))
+	UWidget* CreditsMenu;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* BackButtonCreditsMenu;
+
+	/*
+	 *HOST MENU
+	 */
+
+	UPROPERTY(meta = (BindWidget))
+	class UHostMenu* HostMenu;
+
+	void ShowHostMenu();
+
+	/*
+	 *FIND GAMES MENU
+	 */
+
+	UPROPERTY(meta = (BindWidget))
+	class UFindGamesMenu* FindGamesMenu;
+
+	void ShowFindGamesMenu();
 
 	/*
 	Popup UI
@@ -59,106 +202,18 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	UButton* ErrorPopupButton;
 
+	UFUNCTION()
+	void OnErrorPopupButtonClicked();
+	
 	UPROPERTY(meta = (BindWidget))
 	UPanelWidget* LoadingPopupUI;
 
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* LoadingPopupText;
-
-	UFUNCTION()
-	void OnPopupButtonClicked();
+	UTextBlock* LoadingPopupText;	
 
 public:
 
 	void ShowErrorMessage(FString ErrorMessage);
 
-	void ShowLoadingMessage(FString LoadingMessage);
-
-	void StopShowingLoadingMessage();
-	
-	/*
-	Main Menu
-	*/
-
-private:
-
-	UPROPERTY(meta = (BindWidget))
-	UWidget* MainMenu;
-	
-	UPROPERTY(meta = (BindWidget))
-	UButton* HostButton;
-
-	UPROPERTY(meta = (BindWidget))
-	UButton* JoinButton;
-
-	UFUNCTION()
-	void OnHostClicked();
-
-	UFUNCTION()
-	void OnJoinClicked();
-	
-	/*
-	Host Menu
-	*/
-	
-	UPROPERTY(meta = (BindWidget))
-	UWidget* HostMenu;
-
-	UPROPERTY(meta = (BindWidget))
-	UButton* BackButtonHostMenu;
-
-	UPROPERTY(meta = (BindWidget))
-	UButton* HostButtonHostMenu;
-
-	UPROPERTY(meta = (BindWidget))
-	UEditableText* EditServerName;
-    
-	UFUNCTION()
-	void OnBackHostClicked();
-    
-	UFUNCTION()
-	void HostServer();
-	
-	/*
-	Join Menu
-	*/
-
-	UPROPERTY(meta = (BindWidget))
-	UWidget* JoinMenu;
-
-	UPROPERTY(meta = (BindWidget))
-	UButton* BackButtonJoinMenu;
-
-	UPROPERTY(meta = (BindWidget))
-	UButton* RefreshListButton;
-
-	UPROPERTY(meta = (BindWidget))
-	UButton* JoinButtonJoinMenu;
-
-	UPROPERTY(meta = (BindWidget))
-	UScrollBox* ServerList;
-
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class UServerRow> ServerRowBPClass;
-
-	UFUNCTION()
-	void OnBackJoinClicked();
-
-	UFUNCTION()
-	void OnRefreshListClicked();
-
-	UFUNCTION()
-	void JoinServer();
-
-	TOptional<uint32> SelectedIndex;
-
-	void UpdateAllRows();
-	
-public:
-
-	void SetServerList(TArray<FServerData> InServerList);
-
-	void ClearServerList();
-
-	void SetSelectedIndex(uint32 Index);
+	void ToggleLoadingMessage(bool bVisible, FString LoadingMessage = "");
 };

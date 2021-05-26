@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Interfaces/ZINT_PlayerHUD.h"
 #include "PlayerUI.generated.h"
 
 class UTextBlock;
@@ -18,7 +17,7 @@ class UZHealthComponent;
  * 
  */
 UCLASS()
-class ZOMBIEGAME_API UPlayerUI : public UUserWidget, public IZINT_PlayerHUD
+class ZOMBIEGAME_API UPlayerUI : public UUserWidget
 {
 	GENERATED_BODY()
 
@@ -72,6 +71,6 @@ protected:
 
 public:
 
-	virtual void PlayCrosshairRecoil() override;
+	void PlayCrosshairRecoil();
 	
 };

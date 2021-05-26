@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "Interfaces/ZINT_PlayerHUD.h"
+#include "UI/PlayerUI.h"
 #include "ZINT_ZPlayerController.generated.h"
 
 // This class does not need to be modified.
@@ -24,8 +24,8 @@ class ZOMBIEGAME_API IZINT_ZPlayerController
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
-	//UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-    virtual void AssignPlayerHUD(IZINT_PlayerHUD* NewHUD) = 0;
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    void AssignPlayerHUD(UPlayerUI* NewHUD);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void PlayLocalFiringEffects(TSubclassOf<UMatineeCameraShake> FireCameraShake);

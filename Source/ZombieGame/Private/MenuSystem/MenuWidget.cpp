@@ -52,19 +52,16 @@ void UMenuWidget::Teardown()
 }
 
 
-void UMenuWidget::Setup(class IZINT_GameInstance* NewInterface, bool bVisible, bool bShowCursor)
-{
-	GameInstanceInterface = NewInterface;
-	
-	if(bVisible)
-		DisplayMenu(bShowCursor);
-}
-
-
 void UMenuWidget::OnLevelRemovedFromWorld(ULevel* InLevel, UWorld* InWorld)
 {
 	Teardown();
 	Super::OnLevelRemovedFromWorld(InLevel, InWorld);
+}
+
+
+void UMenuWidget::Setup(class IZINT_GameInstance* NewInterface)
+{
+	GameInstanceInterface = NewInterface;
 }
 
 

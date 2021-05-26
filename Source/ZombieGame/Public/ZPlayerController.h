@@ -15,13 +15,14 @@ class ZOMBIEGAME_API AZPlayerController : public APlayerController , public IZIN
 {
 	GENERATED_BODY()
 
-	IZINT_PlayerHUD* PlayerHUD;
+	UPROPERTY()
+	UPlayerUI* PlayerHUD;
 
 public:
 
 	AZPlayerController();
 
-	virtual void AssignPlayerHUD(IZINT_PlayerHUD* NewHUD) override;
+	virtual void AssignPlayerHUD_Implementation(UPlayerUI* NewHUD) override;
 
 	virtual void PlayLocalFiringEffects_Implementation(TSubclassOf<UMatineeCameraShake> FireCameraShake) override;
 
@@ -32,10 +33,7 @@ protected:
 	virtual void SetupInputComponent() override;
 
 private:
-
-	UPROPERTY()
-	class UZCustomGameInstance* GameInstance;
-
+	
 	void ShowPauseMenu();
 
 };
