@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "MenuSystem/MenuWidget.h"
-#include "ZombieGame/ZServerDataStruct.h"
+#include "Structs/LobbyServerInfo.h"
 #include "FindGamesMenu.generated.h"
 
 class UButton;
@@ -60,7 +60,7 @@ public:
 
 	void RefreshServerList();
 
-	void SetServerList(TArray<FServerData> InServerList);
+	void SetServerList(TArray<FLobbyServerInfo> InServerList);
 
 	void ClearServerList();
 

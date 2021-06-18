@@ -3,7 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MenuSystem/FindGamesMenu.h"
+#include "Structs/GameplaySettings.h"
+#include "Structs/LobbyServerInfo.h"
 #include "UObject/Interface.h"
 #include "ZINT_GameInstance.generated.h"
 
@@ -32,12 +33,32 @@ public:
 
 	virtual void CancelServerSearch() = 0;
 
-	virtual void GetAllGameModesAndMaps(TArray<FString> &InAllGameModes, TArray<FString> &InAllMaps) = 0;
+	UFUNCTION(BlueprintCallable,BlueprintNativeEvent)
+	void ShowPauseMenu();
 
-	virtual uint8 GetMaxAllowedPlayers() = 0;
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	class ULobbyMenu* LoadLobbyMenu();
 
-	virtual void SetFindGamesMenu(UFindGamesMenu* InFindGamesMenu) = 0;
+	virtual void GetAllGameModesAndMaps(TArray<FString> &InAllGameModes, TArray<FString> &InAllMaps) const = 0;
+
+	virtual void GetAllTimeLimitsAndScoreLimits(TArray<FString> &InAllTimeLimits, TArray<FString> &InAllScoreLimits) const = 0;
+
+	virtual uint8 GetMaxAllowedPlayers() const = 0;
+
+	virtual void SetFindGamesMenu(class UFindGamesMenu* InFindGamesMenu) = 0;
 
 	UFUNCTION(BlueprintCallable,BlueprintNativeEvent)
-    void ShowPauseMenu();
+	void GetLobbyServerInfo(FLobbyServerInfo& OutLobbyServerInfo) const;
+
+	virtual float GetMinMouseSensitivity() const = 0;
+
+	virtual float GetMaxMouseSensitivity() const = 0;
+	
+	virtual FGameplaySettings& GetGameplaySettings() = 0;
+
+	virtual void SaveGameplaySettings(FGameplaySettings& NewGameplaySettings) = 0;
+
+	virtual void GetCurrentLobbyInfoIndexes(uint8& OutGameModeIndex, uint8& OutMapIndex, uint8& OutScoreLimitIndex, uint8& OutTimeLimitIndex) = 0;
+
+	virtual void HostUpdateLobbyServerInfo(uint8 GameModeIndex, uint8 MapIndex, uint8 ScoreLimitIndex, uint8 TimeLimitIndex) = 0;
 };

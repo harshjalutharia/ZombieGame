@@ -7,8 +7,7 @@
 #include "Components/TextBlock.h"
 
 
-void UServerRow::Setup(UFindGamesMenu* InParent, uint32 InIndex, FText InServerName, FText InHostUsername,
-	uint8 InCurrentPlayers, uint8 InMaxPlayers)
+void UServerRow::Setup(UFindGamesMenu* InParent, uint32 InIndex, FText InServerName, FText InGameModeName, FText InMapName, uint8 InCurrentPlayers, uint8 InMaxPlayers)
 {
 	ParentMenu = InParent;
 	Index = InIndex;
@@ -19,8 +18,11 @@ void UServerRow::Setup(UFindGamesMenu* InParent, uint32 InIndex, FText InServerN
 	if(ServerName != nullptr)
 		ServerName->SetText(InServerName);
 
-	if(HostUsername != nullptr)
-		HostUsername->SetText(InHostUsername);
+	if(GameModeName != nullptr)
+		GameModeName->SetText(InGameModeName);
+
+	if(MapName != nullptr)
+		MapName->SetText(InMapName);
 
 	if(PlayerCount != nullptr)
 		PlayerCount->SetText(FText::FromString(FString::FromInt(InCurrentPlayers) + "/" + FString::FromInt(InMaxPlayers)));

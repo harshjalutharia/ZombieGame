@@ -49,3 +49,10 @@ void UHorizontalList::Setup()
 		DisplayString->SetText(FText::FromString(List[CurrentIndex]));
 	}
 }
+
+
+void UHorizontalList::SetCurrentIndex(uint8 NewIndex)
+{
+	CurrentIndex = NewIndex;
+	DisplayString->SetText(FText::FromString(List[CurrentIndex]));
+}

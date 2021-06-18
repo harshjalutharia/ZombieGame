@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Interfaces/ZINT_PlayerCharacter.h"
 #include "ZombieGame/ZEnums.h"
+#include "Structs/GameplaySettings.h"
 #include "PlayerCharacter.generated.h"
 
 class UCameraComponent;
@@ -42,12 +43,19 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	UZHealthComponent* HealthComp;
 
+	class IZINT_GameInstance* GameInstanceReference;
+
+	FGameplaySettings GameplaySettings;
+
 	/*
 	INPUT BINDING
 	*/
 
 	void MoveForward(float Value);
 	void MoveRight(float Value);
+
+	void LookUp(float Value);
+	void Turn(float Value);
 
 	void StartCrouching();
 	void StopCrouching();
@@ -57,6 +65,8 @@ private:
 
 	void StartAiming();
 	void StopAiming();
+
+	void ToggleAiming();
 
 	void RequestJump();
 
@@ -226,6 +236,8 @@ public:
 	bool IsJumping() const { return bIsJumping; }
 	UFUNCTION(BlueprintCallable)
     bool IsIdleJump() const { return bIdleJump; }
+
+	void SetGameplaySettings(FGameplaySettings& NewGameplaySettings);
 
 	UZHealthComponent* GetHealthComponent() const { return HealthComp; }
 

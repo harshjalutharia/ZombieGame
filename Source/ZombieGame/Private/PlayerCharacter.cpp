@@ -7,6 +7,7 @@
 #include "ZHealthComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "ZWeapon.h"
+#include "Interfaces/ZINT_GameInstance.h"
 
 
 // Sets default values
@@ -55,7 +56,17 @@ APlayerCharacter::APlayerCharacter(const class FObjectInitializer& ObjectInitial
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	if(GetGameInstance() != nullptr && GetGameInstance()->GetClass()->ImplementsInterface(UZINT_GameInstance::StaticClass()))
+	{
+		GameInstanceReference = Cast<IZINT_GameInstance>(GetGameInstance());
+		if(GameInstanceReference != nullptr)
+		{
+			GameplaySettings = GameInstanceReference->GetGameplaySettings();
+			SetGameplaySettings(GameplaySettings);
+		}
+	}
+
 	if(HasAuthority())
 	{
 		
@@ -146,8 +157,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	PlayerInputComponent->BindAxis("MoveForward",this, &APlayerCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight",this, &APlayerCharacter::MoveRight);
-	PlayerInputComponent->BindAxis("LookUp", this, &APlayerCharacter::AddControllerPitchInput);
-	PlayerInputComponent->BindAxis("LookRight",this, &APlayerCharacter::AddControllerYawInput);
+	PlayerInputComponent->BindAxis("LookUp", this, &APlayerCharacter::LookUp);
+	PlayerInputComponent->BindAxis("LookRight",this, &APlayerCharacter::Turn);
 
 	PlayerInputComponent->BindAction("Crouch",IE_Pressed, this, &APlayerCharacter::StartCrouching);
 	PlayerInputComponent->BindAction("Crouch",IE_Released, this, &APlayerCharacter::StopCrouching);
@@ -155,8 +166,11 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAction("Sprint",IE_Pressed, this, &APlayerCharacter::StartSprinting);
 	PlayerInputComponent->BindAction("Sprint",IE_Released, this, &APlayerCharacter::StopSprinting);
 
-	PlayerInputComponent->BindAction("ADS",IE_Pressed, this, &APlayerCharacter::StartAiming);
-	PlayerInputComponent->BindAction("ADS",IE_Released, this, &APlayerCharacter::StopAiming);
+	if(GameplaySettings.bToggleADS)
+		PlayerInputComponent->BindAction("ADS",IE_Pressed,this,&APlayerCharacter::ToggleAiming);
+	else
+		PlayerInputComponent->BindAction("ADS",IE_Pressed, this, &APlayerCharacter::StartAiming);
+		PlayerInputComponent->BindAction("ADS",IE_Released, this, &APlayerCharacter::StopAiming);
 
 	PlayerInputComponent->BindAction("Fire",IE_Pressed, this, &APlayerCharacter::StartFiring);
 	PlayerInputComponent->BindAction("Fire",IE_Released, this, &APlayerCharacter::StopFiring);
@@ -195,6 +209,18 @@ void APlayerCharacter::MoveRight(float Value)
 }
 
 
+void APlayerCharacter::LookUp(float Value)
+{
+	AddControllerPitchInput(Value*GameplaySettings.MouseSensitivity*GetWorld()->GetDeltaSeconds());
+}
+
+
+void APlayerCharacter::Turn(float Value)
+{
+	AddControllerYawInput(Value*GameplaySettings.MouseSensitivity*GetWorld()->GetDeltaSeconds());
+}
+
+
 void APlayerCharacter::StartCrouching()
 {
 	SetCrouching(true);
@@ -230,6 +256,18 @@ void APlayerCharacter::StopAiming()
 {
 	if(HoldingWeapon())
 		SetAiming(false);
+}
+
+
+void APlayerCharacter::ToggleAiming()
+{
+	if(HoldingWeapon())
+	{
+		if(bIsAiming)
+			SetAiming(false);
+		else
+			SetAiming(true);
+	}
 }
 
 
@@ -655,6 +693,26 @@ void APlayerCharacter::SetActiveWeaponState(EWeaponState NewWeaponState)
 {
 	ActiveWeaponState = NewWeaponState;
 	MoveComp->SetActiveWeaponState(NewWeaponState);
+}
+
+
+void APlayerCharacter::SetGameplaySettings(FGameplaySettings& NewGameplaySettings)
+{
+	GameplaySettings = NewGameplaySettings;
+	
+	InputComponent->RemoveActionBinding("ADS",IE_Pressed);
+	InputComponent->RemoveActionBinding("ADS",IE_Released);
+	
+	if(GameplaySettings.bToggleADS)
+	{
+		InputComponent->BindAction("ADS", IE_Pressed, this, &APlayerCharacter::ToggleAiming);
+	}
+	else
+	{
+		InputComponent->BindAction("ADS",IE_Pressed, this, &APlayerCharacter::StartAiming);
+		InputComponent->BindAction("ADS",IE_Released, this, &APlayerCharacter::StopAiming);
+	}
+	
 }
 
 

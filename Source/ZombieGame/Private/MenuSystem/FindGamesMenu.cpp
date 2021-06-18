@@ -10,7 +10,7 @@
 
 UFindGamesMenu::UFindGamesMenu(const FObjectInitializer& ObjectInitializer)
 {
-	ConstructorHelpers::FClassFinder<UUserWidget>ServerRowClassWidgetBPClass(TEXT("/Game/MenuSystem/WBP_ServerRow"));
+	ConstructorHelpers::FClassFinder<UUserWidget>ServerRowClassWidgetBPClass(TEXT("/Game/MenuSystem/MainMenu/WBP_ServerRow"));
 	if(!ServerRowClassWidgetBPClass.Class) return;
 	ServerRowClass = ServerRowClassWidgetBPClass.Class;
 }
@@ -83,7 +83,7 @@ void UFindGamesMenu::RefreshServerList()
 }
 
 
-void UFindGamesMenu::SetServerList(TArray<FServerData> InServerList)
+void UFindGamesMenu::SetServerList(TArray<FLobbyServerInfo> InServerList)
 {
 	if(ServerList != nullptr)
 	{
@@ -98,7 +98,7 @@ void UFindGamesMenu::SetServerList(TArray<FServerData> InServerList)
 				if(NewServerRow != nullptr)
 				{
 					NewServerRow->Setup(this,itr,FText::FromString(ServerData.ServerName),
-					FText::FromString(ServerData.HostUsername), ServerData.CurrentPlayers,
+					FText::FromString(ServerData.GameModeName), FText::FromString(ServerData.MapName), ServerData.CurrentPlayers,
 					ServerData.MaxPlayers);
 
 					ServerList->AddChild(NewServerRow);

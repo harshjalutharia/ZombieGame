@@ -8,6 +8,7 @@
 #include "Interfaces/ZINT_GameInstance.h"
 #include "MenuSystem/HostMenu.h"
 #include "MenuSystem/FindGamesMenu.h"
+#include "MenuSystem/OptionsMenu.h"
 
 
 bool UMainMenu::Initialize()
@@ -95,11 +96,7 @@ bool UMainMenu::Initialize()
 	if(!ensure(BackButtonCreditsMenu!=nullptr)) return false;
 	BackButtonCreditsMenu->OnClicked.AddDynamic(this, &UMainMenu::OnBackButtonClicked);
 	
-	if(MenuSwitcher != nullptr && StartMenu != nullptr)
-		MenuSwitcher->SetActiveWidget(StartMenu);
-
-	if(DetailsWindowSwitcher != nullptr && EmptyMenu != nullptr)
-		DetailsWindowSwitcher->SetActiveWidget(EmptyMenu);
+	ShowStartMenu();
 	
 	return true;
 }
@@ -109,8 +106,14 @@ void UMainMenu::Setup(IZINT_GameInstance* NewInterface)
 {
 	Super::Setup(NewInterface);
 
-	HostMenu->Setup(NewInterface);
-	FindGamesMenu->Setup(NewInterface);
+	if(HostMenuWindow != nullptr)
+		HostMenuWindow->Setup(NewInterface);
+	
+	if(FindGamesMenuWindow != nullptr)
+		FindGamesMenuWindow->Setup(NewInterface);
+
+	if(OptionsMenuWindow != nullptr)
+		OptionsMenuWindow->Setup(NewInterface);
 }
 
 
@@ -125,10 +128,10 @@ void UMainMenu::ExitGame()
 void UMainMenu::OnPlayButtonClicked()
 {
 	if(MenuSwitcher != nullptr && PlayMenu != nullptr)
-	{
 		MenuSwitcher->SetActiveWidget(PlayMenu);
-		ShowHostMenu();
-	}
+
+	if(DetailsWindowSwitcher != nullptr && HostMenuWindow != nullptr)
+		DetailsWindowSwitcher->SetActiveWidget(HostMenuWindow);
 }
 
 
@@ -143,6 +146,12 @@ void UMainMenu::OnOptionsButtonClicked()
 {
 	if(MenuSwitcher != nullptr && OptionsMenu != nullptr)
 		MenuSwitcher->SetActiveWidget(OptionsMenu);
+
+	if(DetailsWindowSwitcher != nullptr && OptionsMenuWindow != nullptr)
+		DetailsWindowSwitcher->SetActiveWidget(OptionsMenuWindow);
+	
+	if(OptionsMenuWindow != nullptr)
+		OptionsMenuWindow->ShowGameplaySettingsWindow();
 }
 
 
@@ -158,20 +167,25 @@ void UMainMenu::ShowStartMenu()
 	if(MenuSwitcher != nullptr && StartMenu != nullptr)
 		MenuSwitcher->SetActiveWidget(StartMenu);
 
-	if(DetailsWindowSwitcher != nullptr && EmptyMenu != nullptr)
-		DetailsWindowSwitcher->SetActiveWidget(EmptyMenu);
+	if(DetailsWindowSwitcher != nullptr && EmptyWindow != nullptr)
+		DetailsWindowSwitcher->SetActiveWidget(EmptyWindow);
 }
 
 
 void UMainMenu::OnHostGameButtonClicked()
 {
-	ShowHostMenu();
+	if(DetailsWindowSwitcher != nullptr && HostMenuWindow != nullptr)
+		DetailsWindowSwitcher->SetActiveWidget(HostMenuWindow);
 }
 
 
 void UMainMenu::OnFindGamesButtonClicked()
 {
-	ShowFindGamesMenu();
+	if(DetailsWindowSwitcher != nullptr && FindGamesMenuWindow != nullptr)
+	{
+		DetailsWindowSwitcher->SetActiveWidget(FindGamesMenuWindow);
+		FindGamesMenuWindow->RefreshServerList();
+	}
 }
 
 
@@ -193,40 +207,29 @@ void UMainMenu::OnBodyButtonClicked()
 
 void UMainMenu::OnGameplayButtonClicked()
 {
+	if(OptionsMenuWindow != nullptr)
+		OptionsMenuWindow->ShowGameplaySettingsWindow();
 }
 
 
 void UMainMenu::OnAudioButtonClicked()
 {
+	if(OptionsMenuWindow != nullptr)
+		OptionsMenuWindow->ShowAudioSettingsWindow();
 }
 
 
 void UMainMenu::OnVideoButtonClicked()
 {
+	if(OptionsMenuWindow != nullptr)
+		OptionsMenuWindow->ShowVideoSettingsWindow();
 }
 
 
 void UMainMenu::OnControlsButtonClicked()
 {
-}
-
-
-void UMainMenu::ShowHostMenu()
-{
-	if(DetailsWindowSwitcher != nullptr && HostMenu != nullptr)
-	{
-		DetailsWindowSwitcher->SetActiveWidget(HostMenu);
-	}
-}
-
-
-void UMainMenu::ShowFindGamesMenu()
-{
-	if(DetailsWindowSwitcher != nullptr && FindGamesMenu != nullptr)
-	{
-		DetailsWindowSwitcher->SetActiveWidget(FindGamesMenu);
-		FindGamesMenu->RefreshServerList();
-	}
+	if(OptionsMenuWindow != nullptr)
+		OptionsMenuWindow->ShowControlsSettingsWindow();
 }
 
 

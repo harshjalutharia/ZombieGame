@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/TextBlock.h"
+
 #include "HorizontalList.generated.h"
 
 
@@ -49,5 +51,9 @@ public:
 	void Setup();
 
 	uint8 GetCurrentIndex() const { return CurrentIndex; }
+
+	FString GetCurrentString() const { return DisplayString->GetText().ToString(); }
+
+	void SetCurrentIndex(uint8 NewIndex);
 	
 };

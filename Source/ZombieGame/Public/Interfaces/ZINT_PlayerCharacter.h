@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Structs/GameplaySettings.h"
 #include "UObject/Interface.h"
 #include "ZINT_PlayerCharacter.generated.h"
 

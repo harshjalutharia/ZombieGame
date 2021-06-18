@@ -21,3 +21,12 @@ enum class EInventorySlot : uint8
     Weapon1,
     Weapon2
 };
+
+
+UENUM()
+enum class EWeaponType : uint8
+{
+	PrimaryWeapon,
+	SecondaryWeapon,
+	MeleeWeapon
+};

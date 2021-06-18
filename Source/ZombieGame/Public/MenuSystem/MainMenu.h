@@ -4,14 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "MenuSystem/MenuWidget.h"
-#include "ZombieGame/ZServerDataStruct.h"
 #include "MainMenu.generated.h"
 
 class UButton;
 class UWidgetSwitcher;
 class UOverlay;
 class UEditableText;
-class UScrollBox;
 class UTextBlock;
 
 /**
@@ -39,7 +37,7 @@ private:
 	UWidgetSwitcher* DetailsWindowSwitcher;
 
 	UPROPERTY(meta = (BindWidget))
-	UWidget* EmptyMenu;
+	UWidget* EmptyWindow;
 
 	UPROPERTY(meta = (BindWidget))
 	UButton* QuitButton;
@@ -172,22 +170,17 @@ private:
 	UButton* BackButtonCreditsMenu;
 
 	/*
-	 *HOST MENU
+	 *Detail Windows
 	 */
 
 	UPROPERTY(meta = (BindWidget))
-	class UHostMenu* HostMenu;
-
-	void ShowHostMenu();
-
-	/*
-	 *FIND GAMES MENU
-	 */
+	class UHostMenu* HostMenuWindow;
 
 	UPROPERTY(meta = (BindWidget))
-	class UFindGamesMenu* FindGamesMenu;
+	class UFindGamesMenu* FindGamesMenuWindow;
 
-	void ShowFindGamesMenu();
+	UPROPERTY(meta = (BindWidget))
+	class UOptionsMenu* OptionsMenuWindow;
 
 	/*
 	Popup UI

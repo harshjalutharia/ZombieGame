@@ -5,34 +5,18 @@
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
 #include "Interfaces/ZINT_GameInstance.h"
+#include "Structs/ServerSettings.h"
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
+#include "Interfaces/OnlineIdentityInterface.h"
 #include "OnlineSessionSettings.h"
-#include "ZombieGame/ZEnums.h"
+#include "Structs/LobbyPlayerInfo.h"
 #include "ZCustomGameInstance.generated.h"
 
-USTRUCT()
-struct FCustomGameMode
-{
-	GENERATED_BODY()
+#define DEFAULT_MOUSE_SENSITIVITY 50
+#define MAX_MOUSE_SENSITIVITY 100
+#define MIN_MOUSE_SENSITIVITY 1
 
-	FString Name;
-	FString Description;
-	FString URL;
-};
-
-USTRUCT()
-struct FGameMap
-{
-	GENERATED_BODY()
-
-	FString Name;
-	FString Description;
-	FString URL;
-
-	UPROPERTY()
-	UTexture2D* Icon;
-};
 
 /**
  * 
@@ -64,14 +48,6 @@ public:
 	UFUNCTION(BlueprintCallable)
     void LoadPauseMenu();
 
-	UFUNCTION(BlueprintCallable)
-	void LoadLobbyHostMenu();
-
-	UFUNCTION(BlueprintCallable)
-	void LoadLobbyClientMenu();
-	
-private:
-
 	/*
 	Interface Functions
 	*/
@@ -86,18 +62,41 @@ private:
 
 	virtual void ShowPauseMenu_Implementation() override;
 
-	virtual void GetAllGameModesAndMaps(TArray<FString>& InAllGameModes, TArray<FString>& InAllMaps) override;
+	virtual class ULobbyMenu* LoadLobbyMenu_Implementation() override;
 
-	virtual uint8 GetMaxAllowedPlayers() override;
+	virtual void GetAllGameModesAndMaps(TArray<FString>& InAllGameModes, TArray<FString>& InAllMaps) const override;
 
-	virtual void SetFindGamesMenu(UFindGamesMenu* InFindGamesMenu) override;
+	virtual void GetAllTimeLimitsAndScoreLimits(TArray<FString> &InAllTimeLimits, TArray<FString> &InAllScoreLimits) const override;
+
+	virtual uint8 GetMaxAllowedPlayers() const override;
+
+	virtual void SetFindGamesMenu(class UFindGamesMenu* InFindGamesMenu) override;
+
+	virtual void GetLobbyServerInfo_Implementation(FLobbyServerInfo& OutLobbyServerInfo) const override { OutLobbyServerInfo = LobbyServerInfo; }
+
+	virtual float GetMaxMouseSensitivity() const override { return MAX_MOUSE_SENSITIVITY; }
+
+	virtual float GetMinMouseSensitivity() const override { return MIN_MOUSE_SENSITIVITY; }
+
+	virtual FGameplaySettings& GetGameplaySettings() override;// { return GameplaySettings; }
+
+	virtual void SaveGameplaySettings(FGameplaySettings& NewGameplaySettings) override;
+
+	virtual void GetCurrentLobbyInfoIndexes(uint8& OutGameModeIndex, uint8& OutMapIndex, uint8& OutScoreLimitIndex, uint8& OutTimeLimitIndex) override;
+
+	virtual void HostUpdateLobbyServerInfo(uint8 GameModeIndex, uint8 MapIndex, uint8 ScoreLimitIndex, uint8 TimeLimitIndex) override;
 
 	/*
 	Menu classes
 	*/
 
+private:
+
 	UPROPERTY()
 	class UMainMenu* MainMenu;
+
+	UPROPERTY()
+	class UPlayerUI* PlayerUI;
 
 	UPROPERTY()
 	class UMenuWidget* PauseMenu;
@@ -106,17 +105,13 @@ private:
 	class UFindGamesMenu* FindGamesMenu;
 
 	UPROPERTY()
-	class ULobbyMenu* LobbyHostMenu;
+	class ULobbyMenu* LobbyMenu;
 
-	UPROPERTY()
-	class ULobbyMenu* LobbyClientMenu;
-
-	TSubclassOf<UUserWidget> PlayerHUDClass;
 	TSubclassOf<UUserWidget> MainMenuClass;
-	TSubclassOf<UUserWidget> LoadingScreenClass;
+	TSubclassOf<UUserWidget> PlayerUIClass;
 	TSubclassOf<UUserWidget> PauseMenuClass;
-	TSubclassOf<UUserWidget> LobbyHostMenuClass;
-	TSubclassOf<UUserWidget> LobbyClientMenuClass;
+	TSubclassOf<UUserWidget> LoadingScreenClass;
+	TSubclassOf<UUserWidget> LobbyMenuClass;
 
 	/*
 	Delegate Handles
@@ -152,16 +147,55 @@ private:
 	bool bFindingSessions;
 
 	TArray<FCustomGameMode> AllGameModes;
-
 	TArray<FGameMap> AllMaps;
+	TArray<FTimeLimit> AllTimeLimits;
+	TArray<FScoreLimit> AllScoreLimits;
+
+	uint8 SelectedGameModeIndex;
+	uint8 SelectedMapIndex;
+	uint8 SelectedTimeLimitIndex;
+	uint8 SelectedScoreLimitIndex;
 
 	/*
 	Helper functions
 	*/
+
+	void HandleNetworkFailure( UWorld* InWorld, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
+
+	void HandleTravelFailure( UWorld* InWorld, ETravelFailure::Type FailureType, const FString& ErrorString);
 
 	void TriggerError(FString ErrorMessage);
 
 	void TriggerLoadingPopup(bool bShowPopup, FString Message = "");
 
 	void DestroySessionCaller();
+
+	/*
+	 *Player info
+	 */
+
+	UPROPERTY(EditAnywhere)
+	FLobbyPlayerInfo LobbyPlayerInfo;
+
+	/*
+	 *Saving and Loading Settings
+	 */
+	
+	FGameplaySettings GameplaySettings;
+
+	void SaveGameplaySettingsToFile();
+	void LoadGameplaySettingsFromFile();
+	
+	/*
+	 *Lobby Variables
+	 */
+
+	FLobbyServerInfo LobbyServerInfo;
+
+	/*
+	 *Lobby Helper Functions
+	 */
+
+	void SetLobbyInfo(FString InServerName, uint8 InGameMapIndex, uint8 InCustomGameModeIndex, uint8 InMaxPlayers);
+	
 };
