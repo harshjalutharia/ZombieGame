@@ -4,7 +4,6 @@
 #include "LobbyGameMode.h"
 #include "LobbyPlayerController.h"
 #include "Interfaces/ZINT_GameInstance.h"
-#include "LobbyClasses/LobbyGameState.h"
 
 
 ALobbyGameMode::ALobbyGameMode(const FObjectInitializer& ObjectInitializer)
