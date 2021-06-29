@@ -4,6 +4,8 @@
 #include "MenuSystem/FindGamesMenu.h"
 #include "Components/Button.h"
 #include "Components/ScrollBox.h"
+#include "Components/TextBlock.h"
+#include "Components/EditableText.h"
 #include "MenuSystem/ServerRow.h"
 #include "Interfaces/ZINT_GameInstance.h"
 
@@ -27,6 +29,12 @@ bool UFindGamesMenu::Initialize()
 	if(!ensure(JoinGameButton!=nullptr)) return false;
 	JoinGameButton->OnClicked.AddDynamic(this, &UFindGamesMenu::OnJoinGameButtonClicked);
 
+	if(!ensure(CancelButtonPasswordPopup!=nullptr)) return false;
+	CancelButtonPasswordPopup->OnClicked.AddDynamic(this, &UFindGamesMenu::OnCancelButtonClicked);
+
+	if(!ensure(JoinButtonPasswordPopup!=nullptr)) return false;
+	JoinButtonPasswordPopup->OnClicked.AddDynamic(this, &UFindGamesMenu::OnPopupJoinButtonClicked);
+
 	return true;
 }
 
@@ -40,6 +48,15 @@ void UFindGamesMenu::Setup(IZINT_GameInstance* NewInterface)
 	
 	if(LoadingPopupUI != nullptr)
 		LoadingPopupUI->SetVisibility(ESlateVisibility::Hidden);
+
+	if(PasswordPopupUI != nullptr)
+		PasswordPopupUI->SetVisibility(ESlateVisibility::Hidden);
+
+	if(WrongPasswordText != nullptr)
+		WrongPasswordText->SetVisibility(ESlateVisibility::Hidden);
+
+	if(EditPassword != nullptr)
+		EditPassword->SetIsPassword(true);
 }
 
 
@@ -51,9 +68,55 @@ void UFindGamesMenu::OnRefreshListButtonClicked()
 
 void UFindGamesMenu::OnJoinGameButtonClicked()
 {
-	if(SelectedIndex.IsSet() && GameInstanceInterface != nullptr)
+	if(GameInstanceInterface != nullptr)
 	{
-		GameInstanceInterface->Join(SelectedIndex.GetValue());
+		if(SelectedIndex.IsSet() && SelectedIndex.GetValue() < AllServerRows.Num())
+		{
+			if(AllServerRows[SelectedIndex.GetValue()]->GetIsPasswordProtected())
+			{
+				SelectedServerPassword = AllServerRows[SelectedIndex.GetValue()]->GetPassword();
+				
+				if(PasswordPopupUI != nullptr)
+					PasswordPopupUI->SetVisibility(ESlateVisibility::Visible);
+				if(WrongPasswordText != nullptr)
+					WrongPasswordText->SetVisibility(ESlateVisibility::Hidden);
+				if(EditPassword != nullptr)
+					EditPassword->SetText(FText::FromString(""));
+			}
+			else
+			{
+				if(PasswordPopupUI != nullptr)
+					PasswordPopupUI->SetVisibility(ESlateVisibility::Hidden);
+				GameInstanceInterface->Join(SelectedIndex.GetValue());
+			}
+		}
+	}
+}
+
+
+void UFindGamesMenu::OnCancelButtonClicked()
+{
+	if(PasswordPopupUI != nullptr)
+		PasswordPopupUI->SetVisibility(ESlateVisibility::Hidden);
+}
+
+
+void UFindGamesMenu::OnPopupJoinButtonClicked()
+{
+	if(EditPassword != nullptr && GameInstanceInterface != nullptr)
+	{
+		if(SelectedServerPassword.Equals(EditPassword->GetText().ToString()))
+		{
+			if(PasswordPopupUI != nullptr)
+				PasswordPopupUI->SetVisibility(ESlateVisibility::Hidden);
+			GameInstanceInterface->Join(SelectedIndex.GetValue());
+		}
+		else
+		{
+			if(WrongPasswordText != nullptr)
+				WrongPasswordText->SetVisibility(ESlateVisibility::Visible);
+			EditPassword->SetText(FText::FromString(""));
+		}
 	}
 }
 
@@ -97,11 +160,12 @@ void UFindGamesMenu::SetServerList(TArray<FLobbyServerInfo> InServerList)
 
 				if(NewServerRow != nullptr)
 				{
-					NewServerRow->Setup(this,itr,FText::FromString(ServerData.ServerName),
+					NewServerRow->Setup(this,itr,FText::FromString(ServerData.ServerName), ServerData.Password,
 					FText::FromString(ServerData.GameModeName), FText::FromString(ServerData.MapName), ServerData.CurrentPlayers,
 					ServerData.MaxPlayers);
 
 					ServerList->AddChild(NewServerRow);
+					AllServerRows.Add(NewServerRow);
 					itr++;
 				}
 				else
@@ -127,6 +191,10 @@ void UFindGamesMenu::ClearServerList()
 	if(ServerList != nullptr)
 		ServerList->ClearChildren();
 	SelectedIndex.Reset();
+	AllServerRows.Empty();
+
+	if(PasswordPopupUI != nullptr)
+		PasswordPopupUI->SetVisibility(ESlateVisibility::Hidden);
 }
 
 
@@ -142,7 +210,10 @@ void UFindGamesMenu::ToggleLoadingPopupUI(bool bVisible)
 	if(LoadingPopupUI != nullptr)
 	{
 		if(bVisible)
+		{
 			LoadingPopupUI->SetVisibility(ESlateVisibility::Visible);
+			ClearServerList();
+		}
 		else
 			LoadingPopupUI->SetVisibility(ESlateVisibility::Hidden);
 	}		

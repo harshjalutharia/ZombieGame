@@ -9,6 +9,8 @@
 
 class UButton;
 class UScrollBox;
+class UTextBlock;
+class UEditableText;
 
 /**
  * 
@@ -44,7 +46,28 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	UPanelWidget* LoadingPopupUI;
 
+	UPROPERTY(meta = (BindWidget))
+	UPanelWidget* PasswordPopupUI;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* WrongPasswordText;
+
+	UPROPERTY(meta = (BindWidget))
+	UEditableText* EditPassword;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* CancelButtonPasswordPopup;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* JoinButtonPasswordPopup;
+
 	TSubclassOf<class UServerRow> ServerRowClass;
+
+	TOptional<int32> SelectedIndex;
+
+	TArray<UServerRow*> AllServerRows;
+
+	FString SelectedServerPassword;
 
 	UFUNCTION()
 	void OnRefreshListButtonClicked();
@@ -52,7 +75,11 @@ private:
 	UFUNCTION()
 	void OnJoinGameButtonClicked();
 
-	TOptional<uint32> SelectedIndex;
+	UFUNCTION()
+	void OnCancelButtonClicked();
+
+	UFUNCTION()
+	void OnPopupJoinButtonClicked();
 
 	void UpdateAllRows();
 

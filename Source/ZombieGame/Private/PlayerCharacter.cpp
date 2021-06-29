@@ -50,6 +50,8 @@ APlayerCharacter::APlayerCharacter(const class FObjectInitializer& ObjectInitial
 	ReserveWeaponSlot2SocketName = TEXT("ReserveWeaponTwo");
 
 	InteractionRange = 300.f;
+
+	GameplaySettings.bToggleADS = false;
 }
 
 // Called when the game starts or when spawned
@@ -62,8 +64,7 @@ void APlayerCharacter::BeginPlay()
 		GameInstanceReference = Cast<IZINT_GameInstance>(GetGameInstance());
 		if(GameInstanceReference != nullptr)
 		{
-			GameplaySettings = GameInstanceReference->GetGameplaySettings();
-			SetGameplaySettings(GameplaySettings);
+			SetGameplaySettings(GameInstanceReference->GetGameplaySettings());
 		}
 	}
 
@@ -698,21 +699,25 @@ void APlayerCharacter::SetActiveWeaponState(EWeaponState NewWeaponState)
 
 void APlayerCharacter::SetGameplaySettings(FGameplaySettings& NewGameplaySettings)
 {
-	GameplaySettings = NewGameplaySettings;
-	
-	InputComponent->RemoveActionBinding("ADS",IE_Pressed);
-	InputComponent->RemoveActionBinding("ADS",IE_Released);
-	
-	if(GameplaySettings.bToggleADS)
+	if(GameplaySettings.bToggleADS != NewGameplaySettings.bToggleADS)
 	{
-		InputComponent->BindAction("ADS", IE_Pressed, this, &APlayerCharacter::ToggleAiming);
-	}
-	else
-	{
-		InputComponent->BindAction("ADS",IE_Pressed, this, &APlayerCharacter::StartAiming);
-		InputComponent->BindAction("ADS",IE_Released, this, &APlayerCharacter::StopAiming);
+		if(GameplaySettings.bToggleADS)
+		{
+			InputComponent->RemoveActionBinding("ADS",IE_Pressed);
+			
+			InputComponent->BindAction("ADS",IE_Pressed, this, &APlayerCharacter::StartAiming);
+			InputComponent->BindAction("ADS",IE_Released, this, &APlayerCharacter::StopAiming);
+		}
+		else
+		{
+			InputComponent->RemoveActionBinding("ADS",IE_Pressed);
+			InputComponent->RemoveActionBinding("ADS",IE_Released);
+
+			InputComponent->BindAction("ADS", IE_Pressed, this, &APlayerCharacter::ToggleAiming);
+		}
 	}
 	
+	GameplaySettings = NewGameplaySettings;	
 }
 
 

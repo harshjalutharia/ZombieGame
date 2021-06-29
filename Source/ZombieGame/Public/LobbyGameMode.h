@@ -19,23 +19,24 @@ class ZOMBIEGAME_API ALobbyGameMode : public AGameModeBase
 public:
 	
 	ALobbyGameMode(const FObjectInitializer & ObjectInitializer);
-
-protected:
-
-	virtual void BeginPlay() override;
 	
-public:
-
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
 	virtual void Logout(AController* Exiting) override;
 
 	void UpdateLobbyServerInfoOnClients(FLobbyServerInfo& LobbyServerInfo);
 
+	void SetPlayerInfo(class ALobbyPlayerController* InPlayerController, FLobbyPlayerInfo& PlayerInfo);
+
+	void UpdatePlayerStatus(int32 PlayerID, bool bIsReady);
+
+	void KickPlayer(int32 KickPlayerID);
+
 private:
 
-	//UPROPERTY()
-	//class ALobbyGameState* LobbyGameState;
+	void NotifyClientsOfPlayerLeave(int32 LeavingPlayerID);
+
+	int32 PlayerIDIterator;
 
 	UPROPERTY()
 	TArray<class ALobbyPlayerController*> ConnectedPlayers;

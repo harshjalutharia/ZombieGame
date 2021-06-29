@@ -10,7 +10,6 @@
 #include "Interfaces/OnlineSessionInterface.h"
 #include "Interfaces/OnlineIdentityInterface.h"
 #include "OnlineSessionSettings.h"
-#include "Structs/LobbyPlayerInfo.h"
 #include "ZCustomGameInstance.generated.h"
 
 #define DEFAULT_MOUSE_SENSITIVITY 50
@@ -52,7 +51,7 @@ public:
 	Interface Functions
 	*/
 
-	virtual void Host(FString ServerName, uint8 GameModeIndex, uint8 MapIndex, uint8 MaxPlayers, bool bLanMatch) override;
+	virtual void Host(FString& ServerName, FString& Password, uint8 GameModeIndex, uint8 MapIndex, uint8 MaxPlayers, bool bLanMatch) override;
 
 	virtual void Join(uint32 ServerIndex) override;
 
@@ -85,6 +84,10 @@ public:
 	virtual void GetCurrentLobbyInfoIndexes(uint8& OutGameModeIndex, uint8& OutMapIndex, uint8& OutScoreLimitIndex, uint8& OutTimeLimitIndex) override;
 
 	virtual void HostUpdateLobbyServerInfo(uint8 GameModeIndex, uint8 MapIndex, uint8 ScoreLimitIndex, uint8 TimeLimitIndex) override;
+
+	virtual void GetPlayerInfo_Implementation(FLobbyPlayerInfo& OutPlayerInfo) const override { OutPlayerInfo = LobbyPlayerInfo; }
+
+	virtual void StartGame() override;
 
 	/*
 	Menu classes
@@ -196,6 +199,6 @@ private:
 	 *Lobby Helper Functions
 	 */
 
-	void SetLobbyInfo(FString InServerName, uint8 InGameMapIndex, uint8 InCustomGameModeIndex, uint8 InMaxPlayers);
+	void SetLobbyInfo(FString& InServerName, FString& InPassword, uint8 InGameMapIndex, uint8 InCustomGameModeIndex, uint8 InMaxPlayers);
 	
 };

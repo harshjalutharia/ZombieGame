@@ -10,6 +10,7 @@ class UWidgetSwitcher;
 class UScrollBox;
 class UHorizontalList;
 class UButton;
+class ULobbyMenu;
 
 /**
  * 
@@ -28,6 +29,9 @@ public:
 	virtual void Setup(IZINT_GameInstance* NewInterface) override;
 	
 private:
+
+	UPROPERTY()
+	ULobbyMenu* LobbyMenuRef;
 	
 	UPROPERTY(meta = (BindWidget))
 	UWidgetSwitcher* WindowSwitcher;
@@ -67,10 +71,17 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	UScrollBox* KickPlayersList;
 
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class UKickPlayerButton> KickPlayerButtonWidgetClass;
+
 public:
 
 	void ShowSettingsWindow();
 
 	void ShowKickPlayersWindow();
+
+	void RefreshKickPlayersList();
+	
+	void SetLobbyMenuReference(ULobbyMenu* InLobbyMenuRef) { LobbyMenuRef = InLobbyMenuRef; }
 	
 };

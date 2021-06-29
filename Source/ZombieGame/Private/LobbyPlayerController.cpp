@@ -4,26 +4,17 @@
 #include "LobbyPlayerController.h"
 #include "Interfaces/ZINT_GameInstance.h"
 #include "MenuSystem/LobbyMenu.h"
+#include "LobbyGameMode.h"
 #include "Net/UnrealNetwork.h"
 
 
-ALobbyPlayerController::ALobbyPlayerController(const FObjectInitializer& ObjectInitializer)
-{
-	
-}
-
-
-void ALobbyPlayerController::SetLobbyGameModeRef(ALobbyGameMode* InLobbyGameMode)
+void ALobbyPlayerController::Setup(int32 PlayerID, class ALobbyGameMode* InLobbyGameMode)
 {
 	if(!GetWorld()->IsServer()) return;
-	
+
 	LobbyGameMode = InLobbyGameMode;
-}
-
-
-void ALobbyPlayerController::Setup()
-{
 	Client_LoadLobbyMenu();
+	Client_SendPlayerInfoToServer(PlayerID);
 }
 
 
@@ -35,6 +26,21 @@ void ALobbyPlayerController::Client_LoadLobbyMenu_Implementation()
 		{
 			LobbyMenu = IZINT_GameInstance::Execute_LoadLobbyMenu(GetGameInstance());
 			LobbyMenu->SetPlayerControllerReference(this);
+		}
+	}
+}
+
+
+void ALobbyPlayerController::Client_SendPlayerInfoToServer_Implementation(int32 PlayerID)
+{
+	if(IsLocalController() && GetGameInstance() != nullptr)
+	{
+		if(GetGameInstance()->GetClass()->ImplementsInterface(UZINT_GameInstance::StaticClass()))
+		{
+			IZINT_GameInstance::Execute_GetPlayerInfo(GetGameInstance(),SelfPlayerInfo);
+			SelfPlayerInfo.bIsReady = GetWorld()->IsServer() ? true : false;
+			SelfPlayerInfo.PlayerID = PlayerID;
+			Server_SetPlayerInfo(SelfPlayerInfo);
 		}
 	}
 }
@@ -58,10 +64,42 @@ void ALobbyPlayerController::UpdateLobbyInfo(FLobbyServerInfo InLobbyServerInfo)
 }
 
 
+void ALobbyPlayerController::UpdateAllPlayersInfo(const TArray<FLobbyPlayerInfo>& InAllPlayersInfo)
+{
+	AllPlayersInfo = InAllPlayersInfo;
+
+	if(IsLocalController() && LobbyMenu != nullptr)
+		LobbyMenu->UpdateAllPlayersInfo(AllPlayersInfo);
+}
+
+
+void ALobbyPlayerController::UpdatePlayerInfoReadyStatus(int32 PlayerID, bool bIsReady)
+{
+	for(auto& PlayerInfo : AllPlayersInfo)
+	{
+		if(PlayerInfo.PlayerID == PlayerID)
+		{
+			PlayerInfo.bIsReady = bIsReady;
+			break;
+		}
+	}
+
+	if(LobbyMenu != nullptr)
+		LobbyMenu->UpdateAllPlayersInfo(AllPlayersInfo);
+}
+
+
 void ALobbyPlayerController::OnRep_LobbyServerInfo()
 {
 	if(LobbyMenu != nullptr)
 		LobbyMenu->UpdateLobbyInfo(LobbyServerInfo);
+}
+
+
+void ALobbyPlayerController::OnRep_AllPlayersInfo()
+{
+	if(LobbyMenu != nullptr)
+		LobbyMenu->UpdateAllPlayersInfo(AllPlayersInfo);
 }
 
 
@@ -74,15 +112,12 @@ void ALobbyPlayerController::UpdateStatus(bool bIsReady)
 }
 
 
-void ALobbyPlayerController::TryStartSession()
-{
-	
-}
-
-
 void ALobbyPlayerController::Server_UpdateStatus_Implementation(bool bIsReady)
 {
-	// TODO: TELL GAME MODE WE ARE READY TO PLAY
+	if(LobbyGameMode != nullptr)
+	{
+		LobbyGameMode->UpdatePlayerStatus(SelfPlayerInfo.PlayerID,bIsReady);
+	}
 }
 
 
@@ -92,10 +127,43 @@ bool ALobbyPlayerController::Server_UpdateStatus_Validate(bool bIsReady)
 }
 
 
+void ALobbyPlayerController::Server_SetPlayerInfo_Implementation(FLobbyPlayerInfo PlayerInfo)
+{
+	if(LobbyGameMode != nullptr)
+	{
+		SelfPlayerInfo = PlayerInfo;
+		LobbyGameMode->SetPlayerInfo(this, PlayerInfo);
+	}
+}
+
+
+bool ALobbyPlayerController::Server_SetPlayerInfo_Validate(FLobbyPlayerInfo PlayerInfo)
+{
+	return true;
+}
+
+
+void ALobbyPlayerController::RemovePlayerFromAllPlayersInfo(const int32 LeavingPlayerID)
+{
+	for(int32 itr = 0; itr < AllPlayersInfo.Num(); itr++)
+	{
+		if(AllPlayersInfo[itr].PlayerID == LeavingPlayerID)
+		{
+			AllPlayersInfo.RemoveAt(itr);
+			break;
+		}
+	}
+
+	if(IsLocalController() && LobbyMenu != nullptr)
+		LobbyMenu->UpdateAllPlayersInfo(AllPlayersInfo);
+}
+
+
 void ALobbyPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ALobbyPlayerController, LobbyServerInfo);
+	DOREPLIFETIME(ALobbyPlayerController, AllPlayersInfo);
 }
 

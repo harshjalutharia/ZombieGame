@@ -8,6 +8,7 @@
 
 class UTextBlock;
 class UImage;
+class UWidgetSwitcher;
 
 /**
  * 
@@ -24,15 +25,13 @@ class ZOMBIEGAME_API UConnectedPlayer : public UMenuWidget
 	UImage* AvatarImage;
 
 	UPROPERTY(meta = (BindWidget))
-	UImage* StatusImage;
+	UWidgetSwitcher* ReadyStatusSwitcher;
 
-protected:
+	UPROPERTY(meta = (BindWidget))
+	UImage* ReadyImage;
 
-	UPROPERTY(EditDefaultsOnly)
-	UTexture2D* ReadyImage;
-
-	UPROPERTY(EditDefaultsOnly)
-	UTexture2D* NotReadyImage;
+	UPROPERTY(meta = (BindWidget))
+	UImage* NotReadyImage;
 
 public:
 

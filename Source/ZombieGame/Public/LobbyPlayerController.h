@@ -17,16 +17,15 @@ class ZOMBIEGAME_API ALobbyPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
-public:
-
-	ALobbyPlayerController(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
-
 private:
 
 	UPROPERTY(ReplicatedUsing=OnRep_LobbyServerInfo)
 	FLobbyServerInfo LobbyServerInfo;
 
-	FLobbyPlayerInfo LobbyPlayerInfo;
+	FLobbyPlayerInfo SelfPlayerInfo;
+
+	UPROPERTY(ReplicatedUsing=OnRep_AllPlayersInfo)
+	TArray<FLobbyPlayerInfo> AllPlayersInfo;
 
 	UPROPERTY()
 	class ULobbyMenu* LobbyMenu;
@@ -36,23 +35,31 @@ private:
 
 public:
 
-	void SetLobbyGameModeRef(class ALobbyGameMode* InLobbyGameMode);
-
-	void Setup();
+	void Setup(int32 PlayerID, class ALobbyGameMode* InLobbyGameMode);
 
 private:
 
 	UFUNCTION(Client, Reliable)
 	void Client_LoadLobbyMenu();
 
+	UFUNCTION(Client, Reliable)
+	void Client_SendPlayerInfoToServer(int32 PlayerID);
+
 public:
 
 	void UpdateLobbyInfo(FLobbyServerInfo InLobbyServerInfo);
+
+	void UpdateAllPlayersInfo(const TArray<FLobbyPlayerInfo>& InAllPlayersInfo);
+
+	void UpdatePlayerInfoReadyStatus(int32 PlayerID, bool bIsReady);
 
 private:
 
 	UFUNCTION()
 	void OnRep_LobbyServerInfo();
+
+	UFUNCTION()
+	void OnRep_AllPlayersInfo();
 
 public:
 
@@ -63,7 +70,13 @@ private:
 	UFUNCTION(Server,Reliable,WithValidation)
 	void Server_UpdateStatus(bool bIsReady);
 
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_SetPlayerInfo(FLobbyPlayerInfo PlayerInfo);
+
 public:
 
-	void TryStartSession();
+	int32 GetSelfPlayerID() const { return SelfPlayerInfo.PlayerID; }
+
+	void RemovePlayerFromAllPlayersInfo(const int32 LeavingPlayerID);
+	
 };

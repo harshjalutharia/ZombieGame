@@ -212,6 +212,8 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class UConnectedPlayer> ConnectedPlayerWidgetClass;
 
+	TArray<FLobbyPlayerInfo> AllPlayersInfo;
+
 	/*
 	 *Details Window
 	 */
@@ -244,8 +246,17 @@ private:
 	void ClearPlayerList();
 
 	void AddToPlayerList(FLobbyPlayerInfo NewPlayerInfo);
+
+	void UpdateReadyStatusTextOnHost();
 	
 public:
 
 	void UpdateLobbyInfo(FLobbyServerInfo InLobbyServerInfo);
+
+	void UpdateAllPlayersInfo(const TArray<FLobbyPlayerInfo> &InLobbyPlayerInfo);
+
+	const TArray<FLobbyPlayerInfo>& GetAllPlayersInfo() const { return AllPlayersInfo; }
+
+	int32 GetSelfPlayerID() const;
+	
 };

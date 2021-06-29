@@ -10,6 +10,9 @@ struct FLobbyServerInfo
 
 	UPROPERTY()
 	FString ServerName;
+
+	UPROPERTY()
+	FString Password;
 	
 	UPROPERTY()
 	FString MapName;

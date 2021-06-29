@@ -14,34 +14,35 @@
 
 
 const static FName SESSION_NAME = TEXT("MyLocalSessionName");
-const static FName SESSION_SETTINGS_NAME_KEY = TEXT("ServerName");
-const static FName SESSION_SETTINGS_MAPNAME_KEY = TEXT("ServerMapName");
-const static FName SESSION_SETTINGS_GAMEMODE_KEY = TEXT("ServerGameMode");
-const static FName SESSION_SETTINGS_SEARCH_KEY = TEXT("CustomSessionSetting");
-const static FString SESSION_SETTINGS_SEARCH_VALUE = TEXT("CustomSettingValue");
+const static FName SESSION_SETTINGS_NAME_KEY = TEXT("ServerNameKey");
+const static FName SESSION_SETTINGS_PASSWORD_KEY = TEXT("ServerPasswordKey");
+const static FName SESSION_SETTINGS_MAPNAME_KEY = TEXT("ServerMapNameKey");
+const static FName SESSION_SETTINGS_GAMEMODE_KEY = TEXT("ServerGameModeKey");
+const static FName SESSION_SETTINGS_SEARCH_KEY = TEXT("ServerSearchKey");
+const static FString SESSION_SETTINGS_SEARCH_VALUE = TEXT("ServerSearchValue");
 const static FString OPTIONS_SAVE_GAME_SLOT_NAME = TEXT("OptionsSaveGameSlot");
 #define MAX_ALLOWED_PLAYERS 8
 
 
 UZCustomGameInstance::UZCustomGameInstance(const FObjectInitializer& ObjectInitializer)
 {
-	ConstructorHelpers::FClassFinder<UUserWidget>PlayerUIWidgetBPClass(TEXT("/Game/UI/WBP_PlayerUI"));
+	const ConstructorHelpers::FClassFinder<UUserWidget>PlayerUIWidgetBPClass(TEXT("/Game/UI/WBP_PlayerUI"));
 	if(!PlayerUIWidgetBPClass.Class) return;
 	PlayerUIClass = PlayerUIWidgetBPClass.Class;
 
-	ConstructorHelpers::FClassFinder<UUserWidget>MainMenuWidgetBPClass(TEXT("/Game/MenuSystem/MainMenu/WBP_MainMenu"));
+	const ConstructorHelpers::FClassFinder<UUserWidget>MainMenuWidgetBPClass(TEXT("/Game/MenuSystem/MainMenu/WBP_MainMenu"));
 	if(!MainMenuWidgetBPClass.Class) return;
 	MainMenuClass = MainMenuWidgetBPClass.Class;
 
-	ConstructorHelpers::FClassFinder<UUserWidget>LoadingScreenWidgetBPClass(TEXT("/Game/MenuSystem/General/WBP_LoadingScreen"));
+	const ConstructorHelpers::FClassFinder<UUserWidget>LoadingScreenWidgetBPClass(TEXT("/Game/MenuSystem/General/WBP_LoadingScreen"));
 	if(!LoadingScreenWidgetBPClass.Class) return;
 	LoadingScreenClass = LoadingScreenWidgetBPClass.Class;
 
-	ConstructorHelpers::FClassFinder<UUserWidget>PauseMenuWidgetBPClass(TEXT("/Game/MenuSystem/General/WBP_PauseMenu"));
+	const ConstructorHelpers::FClassFinder<UUserWidget>PauseMenuWidgetBPClass(TEXT("/Game/MenuSystem/General/WBP_PauseMenu"));
 	if(!PauseMenuWidgetBPClass.Class) return;
 	PauseMenuClass = PauseMenuWidgetBPClass.Class;
 
-	ConstructorHelpers::FClassFinder<UUserWidget>LobbyMenuWidgetBPClass(TEXT("/Game/MenuSystem/LobbyMenu/WBP_LobbyMenu"));
+	const ConstructorHelpers::FClassFinder<UUserWidget>LobbyMenuWidgetBPClass(TEXT("/Game/MenuSystem/LobbyMenu/WBP_LobbyMenu"));
 	if(!LobbyMenuWidgetBPClass.Class) return;
 	LobbyMenuClass = LobbyMenuWidgetBPClass.Class;
 	
@@ -52,14 +53,15 @@ UZCustomGameInstance::UZCustomGameInstance(const FObjectInitializer& ObjectIniti
 
 	bFindingSessions = false;
 
-	AllGameModes.Add({"Free For All", "All players fight for themselves", ""});
-	AllGameModes.Add({"Team DeathMatch", "Players divided into 2 teams", ""});
-	AllGameModes.Add({"Domination", "Team based bomb defuse mode", ""});
+	AllGameModes.Add({"Free For All", "All players fight for themselves", "BP_GMFreeForAll.BP_GMFreeForAll_C"});
+	AllGameModes.Add({"Team DeathMatch", "Players divided into 2 teams", "BP_GMTeamDeathMatch.BP_GMTeamDeathMatch_C"});
+	AllGameModes.Add({"Domination", "Team based bomb defuse mode", "BP_GMDomination.BP_GMDomination_C"});
 
-	AllMaps.Add({"Factory", "Factory Description", "", nullptr});
-	AllMaps.Add({"City", "City Description", "", nullptr});
-	AllMaps.Add({"Castle", "Castle Description", "", nullptr});
-
+	AllMaps.Add({"Army Base", "Factory Description", "ArmyBase", nullptr});
+	AllMaps.Add({"Desert City", "City Description", "DesertCity", nullptr});
+	AllMaps.Add({"Office", "Castle Description", "Office", nullptr});
+	AllMaps.Add({"Village", "Castle Description", "Village", nullptr});
+	
 	AllTimeLimits.Add({"05:00", 300});
 	AllTimeLimits.Add({"10:00",600});
 	AllTimeLimits.Add({"15:00",900});
@@ -109,9 +111,11 @@ void UZCustomGameInstance::Init()
 		UE_LOG(LogTemp, Error, TEXT("Failed to get Online Subsystem"));
 	}
 
-	const IOnlineIdentityPtr IdentityInterface = Subsystem->GetIdentityInterface();
+	LobbyPlayerInfo.PlayerName = "LOREM IPSUM";
+
+	/*const IOnlineIdentityPtr IdentityInterface = Subsystem->GetIdentityInterface();
 	if(IdentityInterface)
-		LobbyPlayerInfo.PlayerName = IdentityInterface->GetPlayerNickname(0);
+		LobbyPlayerInfo.PlayerName = IdentityInterface->GetPlayerNickname(0);*/
 
 	LoadGameplaySettingsFromFile();
 	
@@ -199,14 +203,14 @@ void UZCustomGameInstance::LoadPauseMenu()
 }
 
 
-void UZCustomGameInstance::Host(FString ServerName, uint8 GameModeIndex, uint8 MapIndex, uint8 MaxPlayers, bool bLanMatch)
+void UZCustomGameInstance::Host(FString& ServerName, FString& Password, uint8 GameModeIndex, uint8 MapIndex, uint8 MaxPlayers, bool bLanMatch)
 {
 	if(SessionInterface.IsValid())
 	{
 		if(bFindingSessions)
 			CancelServerSearch();
 
-		SetLobbyInfo(ServerName, MapIndex, GameModeIndex, MaxPlayers);
+		SetLobbyInfo(ServerName, Password, MapIndex, GameModeIndex, MaxPlayers);
 
 		FOnlineSessionSettings SessionSettings;
 
@@ -217,6 +221,7 @@ void UZCustomGameInstance::Host(FString ServerName, uint8 GameModeIndex, uint8 M
 		
 		SessionSettings.Set(SESSION_SETTINGS_SEARCH_KEY, SESSION_SETTINGS_SEARCH_VALUE, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 		SessionSettings.Set(SESSION_SETTINGS_NAME_KEY, LobbyServerInfo.ServerName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+		SessionSettings.Set(SESSION_SETTINGS_PASSWORD_KEY, LobbyServerInfo.Password, EOnlineDataAdvertisementType::ViaOnlineService);
 		SessionSettings.Set(SESSION_SETTINGS_MAPNAME_KEY, LobbyServerInfo.MapName, EOnlineDataAdvertisementType::ViaOnlineService);
 		SessionSettings.Set(SESSION_SETTINGS_GAMEMODE_KEY, LobbyServerInfo.GameModeName, EOnlineDataAdvertisementType::ViaOnlineService);
 
@@ -449,6 +454,15 @@ void UZCustomGameInstance::HostUpdateLobbyServerInfo(uint8 GameModeIndex, uint8 
 }
 
 
+void UZCustomGameInstance::StartGame()
+{
+	UWorld* World = GetWorld();
+	if(!ensure(World != nullptr)) return;
+	
+	World->ServerTravel(FString::Printf(TEXT("/Game/Levels/Maps/%s?game=/Game/Blueprints/%s"),*AllMaps[SelectedMapIndex].URL,*AllGameModes[SelectedGameModeIndex].URL));
+}
+
+
 void UZCustomGameInstance::OnCreateSessionComplete(FName SessionName, bool Success)
 {
 	if(!Success)
@@ -489,12 +503,17 @@ void UZCustomGameInstance::OnFindSessionsComplete(bool Success)
 				ServerInfo.MaxPlayers = Result.Session.SessionSettings.NumPublicConnections;
 				ServerInfo.CurrentPlayers = ServerInfo.MaxPlayers - Result.Session.NumOpenPublicConnections;
 
-				FString ServerName, MapName, GameModeName;
+				FString ServerName, MapName, GameModeName, Password;
 				
 				if(Result.Session.SessionSettings.Get(SESSION_SETTINGS_NAME_KEY, ServerName))
 					ServerInfo.ServerName = ServerName;
 				else
 					ServerInfo.ServerName = "<No Server Name>";
+
+				if(Result.Session.SessionSettings.Get(SESSION_SETTINGS_PASSWORD_KEY, Password))
+					ServerInfo.Password = Password;
+				else
+					ServerInfo.Password = "";
 				
 				if(Result.Session.SessionSettings.Get(SESSION_SETTINGS_GAMEMODE_KEY, GameModeName))
 					ServerInfo.GameModeName = GameModeName;
@@ -575,14 +594,16 @@ void UZCustomGameInstance::OnDestroySessionComplete(FName SessionName, bool Succ
 void UZCustomGameInstance::HandleNetworkFailure(UWorld* InWorld, UNetDriver* NetDriver, ENetworkFailure::Type FailureType,
 	const FString& ErrorString)
 {
-	
+	TriggerError(FString::Printf(TEXT("Network Failure: %s"),*ErrorString));
+	UE_LOG(LogTemp, Warning, TEXT("Network Failure: %s"),*ErrorString);
 }
 
 
 void UZCustomGameInstance::HandleTravelFailure(UWorld* InWorld, ETravelFailure::Type FailureType,
 	const FString& ErrorString)
 {
-	
+	TriggerError(FString::Printf(TEXT("Travel Failure: %s"),*ErrorString));
+	UE_LOG(LogTemp, Warning, TEXT("Travel Failure: %s"),*ErrorString);
 }
 
 
@@ -663,9 +684,10 @@ void UZCustomGameInstance::LoadGameplaySettingsFromFile()
 }
 
 
-void UZCustomGameInstance::SetLobbyInfo(FString InServerName, uint8 InGameMapIndex, uint8 InCustomGameModeIndex, uint8 InMaxPlayers)
+void UZCustomGameInstance::SetLobbyInfo(FString& InServerName, FString& InPassword, uint8 InGameMapIndex, uint8 InCustomGameModeIndex, uint8 InMaxPlayers)
 {
 	LobbyServerInfo.ServerName = InServerName;
+	LobbyServerInfo.Password = InPassword;
 	LobbyServerInfo.MapName = AllMaps[InGameMapIndex].Name;
 	LobbyServerInfo.GameModeName = AllGameModes[InCustomGameModeIndex].Name;
 	LobbyServerInfo.CurrentPlayers = 0;

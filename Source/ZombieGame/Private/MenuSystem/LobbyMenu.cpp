@@ -12,6 +12,7 @@
 #include "Components/WidgetSwitcher.h"
 #include "Components/ScrollBox.h"
 #include "LobbyPlayerController.h"
+#include "Interfaces/ZINT_GameInstance.h"
 #include "GameFramework/GameModeBase.h"
 
 
@@ -125,7 +126,10 @@ void ULobbyMenu::Setup(IZINT_GameInstance* NewInterface)
 	}
 
 	if(ServerSettingsWindow != nullptr)
+	{
 		ServerSettingsWindow->Setup(NewInterface);
+		ServerSettingsWindow->SetLobbyMenuReference(this);
+	}
 
 	if(SelectLoadoutWindow != nullptr)
 		SelectLoadoutWindow->Setup(NewInterface);
@@ -161,6 +165,8 @@ void ULobbyMenu::OnChangeSettingsButtonClicked()
 
 	if(ServerSettingsWindow != nullptr)
 		ServerSettingsWindow->ShowSettingsWindow();
+
+	SetAsNotReady();
 }
 
 
@@ -174,6 +180,8 @@ void ULobbyMenu::OnSelectLoadoutButtonClicked()
 
 	if(SelectLoadoutWindow != nullptr)
 		SelectLoadoutWindow->ShowPrimaryLoadoutWindow();
+
+	SetAsNotReady();
 }
 
 
@@ -187,6 +195,8 @@ void ULobbyMenu::OnOptionsButtonClicked()
 
 	if(OptionsWindow != nullptr)
 		OptionsWindow->ShowGameplaySettingsWindow();
+
+	SetAsNotReady();
 }
 
 
@@ -311,12 +321,31 @@ void ULobbyMenu::SetAsNotReady()
 		StartReadyButtonText->SetText(FText::FromString("Ready"));
 	if(ReadyStatusText != nullptr)
 		ReadyStatusText->SetText(FText::FromString("Status: Not Ready"));
+
+	if(LobbyPlayerController != nullptr)
+		LobbyPlayerController->UpdateStatus(false);
 }
 
 
 void ULobbyMenu::TryStartSession()
 {
 	if(!bIsHost) return;
+
+	bool bCanStart = true;
+
+	for(auto& PlayerInfo : AllPlayersInfo)
+	{
+		if(!PlayerInfo.bIsReady)
+		{
+			bCanStart = false;
+			break;
+		}
+	}
+
+	if(bCanStart && GameInstanceInterface != nullptr)
+	{
+		GameInstanceInterface->StartGame();
+	}
 }
 
 
@@ -341,6 +370,25 @@ void ULobbyMenu::AddToPlayerList(FLobbyPlayerInfo NewPlayerInfo)
 }
 
 
+void ULobbyMenu::UpdateReadyStatusTextOnHost()
+{
+	if(ReadyStatusText != nullptr)
+	{
+		int32 ReadyPlayerCount = 0;
+		int32 TotalPlayerCount = 0;
+
+		for(auto& PlayerInfo : AllPlayersInfo)
+		{
+			TotalPlayerCount++;
+			if(PlayerInfo.bIsReady)
+				ReadyPlayerCount++;
+		}
+		
+		ReadyStatusText->SetText(FText::FromString(FString::Printf(TEXT("Players Ready: %d/%d"),ReadyPlayerCount,TotalPlayerCount)));
+	}
+}
+
+
 void ULobbyMenu::UpdateLobbyInfo(FLobbyServerInfo InLobbyServerInfo)
 {
 	if(ServerName != nullptr)
@@ -358,3 +406,41 @@ void ULobbyMenu::UpdateLobbyInfo(FLobbyServerInfo InLobbyServerInfo)
 	if(ScoreLimit != nullptr)
 		ScoreLimit->SetText(FText::FromString(InLobbyServerInfo.ScoreLimit));
 }
+
+
+void ULobbyMenu::UpdateAllPlayersInfo(const TArray<FLobbyPlayerInfo>& InLobbyPlayerInfo)
+{
+	if(PlayerListScrollBox != nullptr && IsValid(ConnectedPlayerWidgetClass))
+	{
+		AllPlayersInfo = InLobbyPlayerInfo;
+		
+		PlayerListScrollBox->ClearChildren();
+		
+		for(auto &PlayerInfo : AllPlayersInfo)
+		{
+			UConnectedPlayer* Player = CreateWidget<UConnectedPlayer>(this,ConnectedPlayerWidgetClass);
+			if(Player != nullptr)
+			{
+				Player->SetPlayerNameAndAvatar(PlayerInfo.PlayerName);
+				Player->SetPlayerStatus(PlayerInfo.bIsReady);
+				PlayerListScrollBox->AddChild(Player);
+			}
+		}
+
+		if(ServerSettingsWindow != nullptr)
+			ServerSettingsWindow->RefreshKickPlayersList();
+
+		if(bIsHost)
+			UpdateReadyStatusTextOnHost();
+	}
+}
+
+
+int32 ULobbyMenu::GetSelfPlayerID() const
+{
+	if(LobbyPlayerController != nullptr)
+		return LobbyPlayerController->GetSelfPlayerID();
+
+	return -1;
+}
+

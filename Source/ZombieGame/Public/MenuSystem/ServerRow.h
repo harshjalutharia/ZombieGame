@@ -10,6 +10,7 @@
 class UFindGamesMenu;
 class UTextBlock;
 class UButton;
+class UImage;
 
 
 /**
@@ -24,6 +25,8 @@ class ZOMBIEGAME_API UServerRow : public UUserWidget
 	UFindGamesMenu* ParentMenu;
 
 	uint32 Index;
+
+	FString Password;
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* ServerName;
@@ -40,11 +43,26 @@ class ZOMBIEGAME_API UServerRow : public UUserWidget
 	UPROPERTY(meta = (BindWidget))
 	UButton* SelectButton;
 
+	UPROPERTY(meta = (BindWidget))
+	UImage* PasswordImage;
+
+protected:
+
+	UPROPERTY(EditDefaultsOnly)
+	UTexture2D* LockedImage;
+
+	UPROPERTY(EditDefaultsOnly)
+	UTexture2D* UnlockedImage;
+
 public:
 
-	void Setup(UFindGamesMenu* InParent, uint32 InIndex, FText InServerName, FText InGameModeName, FText InMapName, uint8 InCurrentPlayers, uint8 InMaxPlayers);
+	void Setup(UFindGamesMenu* InParent, uint32 InIndex, FText InServerName, FString InPassword, FText InGameModeName, FText InMapName, uint8 InCurrentPlayers, uint8 InMaxPlayers);
 
 	void SetSelected(bool IsSelected);
+
+	bool GetIsPasswordProtected() const { return !Password.Equals(""); }
+
+	FString& GetPassword() { return Password; }
 
 protected:
 

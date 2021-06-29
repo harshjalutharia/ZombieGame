@@ -2,6 +2,7 @@
 
 
 #include "MenuSystem/ConnectedPlayer.h"
+#include "Components/WidgetSwitcher.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 
@@ -22,20 +23,18 @@ void UConnectedPlayer::SetPlayerNameAndAvatar(const FString& InPlayerName, UText
 
 void UConnectedPlayer::SetPlayerStatus(bool bIsReady)
 {
-	if(bIsReady)
+	if(!bIsReady)
 	{
-		if(ReadyImage != nullptr && StatusImage != nullptr)
+		if(ReadyStatusSwitcher != nullptr && NotReadyImage != nullptr)
 		{
-			StatusImage->SetBrushFromTexture(ReadyImage);
-			StatusImage->Brush.ImageSize = FVector2D(24.f,24.f);
+			ReadyStatusSwitcher->SetActiveWidget(NotReadyImage);
 		}
 	}
 	else
 	{
-		if(NotReadyImage != nullptr && StatusImage != nullptr)
+		if(ReadyStatusSwitcher != nullptr && ReadyImage != nullptr)
 		{
-			StatusImage->SetBrushFromTexture(NotReadyImage);
-			StatusImage->Brush.ImageSize = FVector2D(24.f,24.f);
+			ReadyStatusSwitcher->SetActiveWidget(ReadyImage);
 		}
 	}
 }

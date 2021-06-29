@@ -27,6 +27,9 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	UEditableText* EditServerName;
+	
+	UPROPERTY(meta = (BindWidget))
+	UEditableText* EditPassword;
 
 	UPROPERTY(meta = (BindWidget))
 	UHorizontalList* HLS_GameMode;

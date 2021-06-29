@@ -16,6 +16,9 @@ bool UHostMenu::Initialize()
 
 	if(!ensure(HostButtonHostMenu!=nullptr)) return false;
 	HostButtonHostMenu->OnClicked.AddDynamic(this, &UHostMenu::OnHostButtonHostMenuClicked);
+	
+	if(EditPassword != nullptr)
+		EditPassword->SetIsPassword(true);
 
 	return true;
 }
@@ -30,6 +33,10 @@ void UHostMenu::OnHostButtonHostMenuClicked()
 			ServerName = EditServerName->GetText().ToString();
 		ServerName = (ServerName == "")? "My Server" : ServerName;
 
+		FString Password = "";
+		if(EditPassword != nullptr)
+			Password = EditPassword->GetText().ToString();
+
 		const uint8 MapIndex = HLS_Map->GetCurrentIndex();
 		const uint8 GameModeIndex = HLS_GameMode->GetCurrentIndex();
 		const uint8 MaxPlayers = HLS_MaxPlayers->GetCurrentIndex() + 1;
@@ -38,7 +45,7 @@ void UHostMenu::OnHostButtonHostMenuClicked()
 		if(LANCheckBox != nullptr)
 			bLanMatch = LANCheckBox->IsChecked();
 		
-		GameInstanceInterface->Host(ServerName, GameModeIndex, MapIndex, MaxPlayers, bLanMatch);
+		GameInstanceInterface->Host(ServerName, Password, GameModeIndex, MapIndex, MaxPlayers, bLanMatch);
 	}
 }
 

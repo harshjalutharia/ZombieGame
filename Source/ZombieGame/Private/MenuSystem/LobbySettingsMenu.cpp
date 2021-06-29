@@ -2,9 +2,10 @@
 
 
 #include "MenuSystem/LobbySettingsMenu.h"
+#include "MenuSystem/LobbyMenu.h"
 #include "MenuSystem/HorizontalList.h"
+#include "MenuSystem/KickPlayerButton.h"
 #include "Interfaces/ZINT_GameInstance.h"
-#include "LobbyGameMode.h"
 #include "Components/WidgetSwitcher.h"
 #include "Components/ScrollBox.h"
 #include "Components/Button.h"
@@ -77,5 +78,33 @@ void ULobbySettingsMenu::ShowKickPlayersWindow()
 {
 	if(WindowSwitcher != nullptr && KickPlayersWindow != nullptr)
 		WindowSwitcher->SetActiveWidget(KickPlayersWindow);
+
+	RefreshKickPlayersList();
+}
+
+
+void ULobbySettingsMenu::RefreshKickPlayersList()
+{
+	if(KickPlayersList != nullptr)
+	{
+		KickPlayersList->ClearChildren();
+		auto AllPlayersInfo = LobbyMenuRef->GetAllPlayersInfo();
+		int32 HostPlayerID = -1;
+		if(LobbyMenuRef != nullptr)
+			HostPlayerID = LobbyMenuRef->GetSelfPlayerID();
+		
+		for(auto& PlayerInfo : AllPlayersInfo)
+		{
+			if(PlayerInfo.PlayerID != HostPlayerID)
+			{
+				UKickPlayerButton* Player = CreateWidget<UKickPlayerButton>(this, KickPlayerButtonWidgetClass);
+				if(Player != nullptr)
+				{
+					Player->SetPlayerInfo(PlayerInfo);
+					KickPlayersList->AddChild(Player);
+				}
+			}
+		}
+	}
 }
 

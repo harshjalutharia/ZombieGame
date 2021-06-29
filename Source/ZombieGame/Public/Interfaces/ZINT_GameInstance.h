@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Structs/GameplaySettings.h"
+#include "Structs/LobbyPlayerInfo.h"
 #include "Structs/LobbyServerInfo.h"
 #include "UObject/Interface.h"
 #include "ZINT_GameInstance.generated.h"
@@ -25,7 +26,7 @@ class ZOMBIEGAME_API IZINT_GameInstance
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
-	virtual void Host(FString ServerName, uint8 GameModeIndex, uint8 MapIndex, uint8 MaxPlayers, bool bLanMatch) = 0;
+	virtual void Host(FString& ServerName, FString& Password, uint8 GameModeIndex, uint8 MapIndex, uint8 MaxPlayers, bool bLanMatch) = 0;
 
 	virtual void Join(uint32 ServerIndex) = 0;
 
@@ -61,4 +62,9 @@ public:
 	virtual void GetCurrentLobbyInfoIndexes(uint8& OutGameModeIndex, uint8& OutMapIndex, uint8& OutScoreLimitIndex, uint8& OutTimeLimitIndex) = 0;
 
 	virtual void HostUpdateLobbyServerInfo(uint8 GameModeIndex, uint8 MapIndex, uint8 ScoreLimitIndex, uint8 TimeLimitIndex) = 0;
+
+	UFUNCTION(BlueprintCallable,BlueprintNativeEvent)
+	void GetPlayerInfo(FLobbyPlayerInfo& OutPlayerInfo) const;
+
+	virtual void StartGame() = 0;
 };
