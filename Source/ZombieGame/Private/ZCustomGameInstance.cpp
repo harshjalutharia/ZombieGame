@@ -395,7 +395,6 @@ void UZCustomGameInstance::SetFindGamesMenu(UFindGamesMenu* InFindGamesMenu)
 
 FGameplaySettings& UZCustomGameInstance::GetGameplaySettings()
 {
-	// TODO: REMOVE LOADING FROM FILE
 	LoadGameplaySettingsFromFile();
 	return GameplaySettings;
 }

@@ -135,6 +135,28 @@ void ALobbyGameMode::KickPlayer(int32 KickPlayerID)
 }
 
 
+void ALobbyGameMode::SendChatMessage(int32 PlayerID, const FString& Message)
+{
+	FString OutMessage;
+	for(auto& Player : ConnectedPlayersInfo)
+	{
+		if(Player.Value.PlayerID == PlayerID)
+		{
+			OutMessage = Player.Value.PlayerName;
+			OutMessage.Append(": ");
+			break;
+		}
+	}
+
+	OutMessage.Append(Message);
+	
+	for(auto PC : ConnectedPlayers)
+	{
+		PC->Client_DisplayBroadcastedMessage(OutMessage);
+	}
+}
+
+
 void ALobbyGameMode::NotifyClientsOfPlayerLeave(int32 LeavingPlayerID)
 {
 	for(auto PC : ConnectedPlayers)

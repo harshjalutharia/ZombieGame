@@ -32,7 +32,7 @@ public:
 
 	virtual void Setup(IZINT_GameInstance* NewInterface) override;
 
-	void SetPlayerControllerReference(ALobbyPlayerController* InLobbyPlayerController) { LobbyPlayerController = InLobbyPlayerController; }
+	void SetPlayerControllerReference(ALobbyPlayerController* InLobbyPlayerController);
 	
 private:
 
@@ -234,6 +234,13 @@ private:
 	class UOptionsMenu* OptionsWindow;
 
 	/*
+	 *Chat Window
+	 */
+
+	UPROPERTY(meta = (BindWidget))
+	class UChatWindow* ChatWindow;
+
+	/*
 	 *Helper Functions
 	 */
 
@@ -258,5 +265,7 @@ public:
 	const TArray<FLobbyPlayerInfo>& GetAllPlayersInfo() const { return AllPlayersInfo; }
 
 	int32 GetSelfPlayerID() const;
+
+	void AddMessageToChatWindow(const FString& Message);
 	
 };

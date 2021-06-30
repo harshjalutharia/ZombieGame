@@ -14,6 +14,7 @@
 #include "LobbyPlayerController.h"
 #include "Interfaces/ZINT_GameInstance.h"
 #include "GameFramework/GameModeBase.h"
+#include "MenuSystem/ChatWindow.h"
 
 
 bool ULobbyMenu::Initialize()
@@ -136,6 +137,18 @@ void ULobbyMenu::Setup(IZINT_GameInstance* NewInterface)
 
 	if(OptionsWindow != nullptr)
 		OptionsWindow->Setup(NewInterface);
+
+	if(ChatWindow != nullptr)
+		ChatWindow->Setup(NewInterface);
+}
+
+
+void ULobbyMenu::SetPlayerControllerReference(ALobbyPlayerController* InLobbyPlayerController)
+{
+	LobbyPlayerController = InLobbyPlayerController;
+	
+	if(ChatWindow != nullptr)
+		ChatWindow->SetLobbyPlayerControllerReference(LobbyPlayerController);
 }
 
 
@@ -444,3 +457,11 @@ int32 ULobbyMenu::GetSelfPlayerID() const
 	return -1;
 }
 
+
+void ULobbyMenu::AddMessageToChatWindow(const FString& Message)
+{
+	if(ChatWindow != nullptr)
+	{
+		ChatWindow->AddMessageToChatWindow(Message);
+	}
+}

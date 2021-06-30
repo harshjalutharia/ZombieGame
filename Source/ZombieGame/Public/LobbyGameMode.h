@@ -32,6 +32,8 @@ public:
 
 	void KickPlayer(int32 KickPlayerID);
 
+	void SendChatMessage(int32 PlayerID, const FString& Message);
+
 private:
 
 	void NotifyClientsOfPlayerLeave(int32 LeavingPlayerID);

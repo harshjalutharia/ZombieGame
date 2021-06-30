@@ -75,6 +75,12 @@ private:
 
 public:
 
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_SendChatMessage(const FString& Message);
+
+	UFUNCTION(Client, Reliable)
+	void Client_DisplayBroadcastedMessage(const FString& Message);
+
 	int32 GetSelfPlayerID() const { return SelfPlayerInfo.PlayerID; }
 
 	void RemovePlayerFromAllPlayersInfo(const int32 LeavingPlayerID);

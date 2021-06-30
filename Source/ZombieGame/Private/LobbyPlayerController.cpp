@@ -143,6 +143,30 @@ bool ALobbyPlayerController::Server_SetPlayerInfo_Validate(FLobbyPlayerInfo Play
 }
 
 
+void ALobbyPlayerController::Server_SendChatMessage_Implementation(const FString& Message)
+{
+	if(LobbyGameMode != nullptr)
+	{
+		LobbyGameMode->SendChatMessage(SelfPlayerInfo.PlayerID, Message);
+	}
+}
+
+
+bool ALobbyPlayerController::Server_SendChatMessage_Validate(const FString& Message)
+{
+	return true;
+}
+
+
+void ALobbyPlayerController::Client_DisplayBroadcastedMessage_Implementation(const FString& Message)
+{
+	if(IsLocalController() && LobbyMenu!=nullptr)
+	{
+		LobbyMenu->AddMessageToChatWindow(Message);
+	}
+}
+
+
 void ALobbyPlayerController::RemovePlayerFromAllPlayersInfo(const int32 LeavingPlayerID)
 {
 	for(int32 itr = 0; itr < AllPlayersInfo.Num(); itr++)
