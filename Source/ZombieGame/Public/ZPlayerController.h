@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "Interfaces/ZINT_ZPlayerController.h"
+#include "MenuSystem/PauseMenu.h"
+
 #include "ZPlayerController.generated.h"
 
 /**
@@ -34,6 +36,13 @@ protected:
 
 private:
 	
-	void ShowPauseMenu();
+	UPROPERTY()
+	class UPauseMenu* PauseMenu;
+
+	bool bIsPauseMenuActive;
+
+public:
+	
+	void TogglePauseMenu();
 
 };

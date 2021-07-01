@@ -44,9 +44,6 @@ public:
 	UFUNCTION(BlueprintCallable)
     void LoadLoadingScreen();
 
-	UFUNCTION(BlueprintCallable)
-    void LoadPauseMenu();
-
 	/*
 	Interface Functions
 	*/
@@ -59,7 +56,7 @@ public:
 
 	virtual void CancelServerSearch() override;
 
-	virtual void ShowPauseMenu_Implementation() override;
+	virtual class UPauseMenu* LoadPauseMenu_Implementation() override;
 
 	virtual class ULobbyMenu* LoadLobbyMenu_Implementation() override;
 
@@ -102,13 +99,13 @@ private:
 	class UPlayerUI* PlayerUI;
 
 	UPROPERTY()
-	class UMenuWidget* PauseMenu;
-
-	UPROPERTY()
 	class UFindGamesMenu* FindGamesMenu;
 
 	UPROPERTY()
 	class ULobbyMenu* LobbyMenu;
+
+	UPROPERTY()
+	class UPauseMenu* PauseMenu;
 
 	TSubclassOf<UUserWidget> MainMenuClass;
 	TSubclassOf<UUserWidget> PlayerUIClass;

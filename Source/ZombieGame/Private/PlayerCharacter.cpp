@@ -52,6 +52,7 @@ APlayerCharacter::APlayerCharacter(const class FObjectInitializer& ObjectInitial
 	InteractionRange = 300.f;
 
 	GameplaySettings.bToggleADS = false;
+	bIsPauseMenuActive = false;
 }
 
 // Called when the game starts or when spawned
@@ -200,30 +201,40 @@ bool APlayerCharacter::IsSprinting() const
 
 void APlayerCharacter::MoveForward(float Value)
 {
+	if(bIsPauseMenuActive) return;
+	
 	AddMovementInput(GetActorForwardVector()*Value);
 }
 
 
 void APlayerCharacter::MoveRight(float Value)
 {
+	if(bIsPauseMenuActive) return;
+	
 	AddMovementInput(GetActorRightVector()*Value);
 }
 
 
 void APlayerCharacter::LookUp(float Value)
 {
+	if(bIsPauseMenuActive) return;
+	
 	AddControllerPitchInput(Value*GameplaySettings.MouseSensitivity*GetWorld()->GetDeltaSeconds());
 }
 
 
 void APlayerCharacter::Turn(float Value)
 {
+	if(bIsPauseMenuActive) return;
+	
 	AddControllerYawInput(Value*GameplaySettings.MouseSensitivity*GetWorld()->GetDeltaSeconds());
 }
 
 
 void APlayerCharacter::StartCrouching()
 {
+	if(bIsPauseMenuActive) return;
+	
 	SetCrouching(true);
 }
 
@@ -236,6 +247,8 @@ void APlayerCharacter::StopCrouching()
 
 void APlayerCharacter::StartSprinting()
 {
+	if(bIsPauseMenuActive) return;
+	
 	SetSprinting(true);
 }
 
@@ -248,6 +261,8 @@ void APlayerCharacter::StopSprinting()
 
 void APlayerCharacter::StartAiming()
 {
+	if(bIsPauseMenuActive) return;
+	
 	if(HoldingWeapon())
 		SetAiming(true);
 }
@@ -274,12 +289,16 @@ void APlayerCharacter::ToggleAiming()
 
 void APlayerCharacter::RequestJump()
 {
+	if(bIsPauseMenuActive) return;
+	
 	SetJumping(true);
 }
 
 
 void APlayerCharacter::StartFiring()
 {
+	if(bIsPauseMenuActive) return;
+	
 	bWantsToFire = true;
 
 	if(IsSprinting())
@@ -308,6 +327,8 @@ void APlayerCharacter::StopFiring()
 
 void APlayerCharacter::RequestReload()
 {
+	if(bIsPauseMenuActive) return;
+	
 	if(ActiveWeapon)
 	{
 		ActiveWeapon->ReloadWeapon();
@@ -323,6 +344,8 @@ void APlayerCharacter::QuickSwitchWeapon()
 
 void APlayerCharacter::UseWeaponSlot1()
 {
+	if(bIsPauseMenuActive) return;
+	
 	if(WeaponSlot1 != nullptr && !bWantsToFire && ActiveWeapon!=WeaponSlot1)
 	{
 		if(ActiveWeapon->IsReloading())
@@ -336,6 +359,8 @@ void APlayerCharacter::UseWeaponSlot1()
 
 void APlayerCharacter::UseWeaponSlot2()
 {
+	if(bIsPauseMenuActive) return;
+	
 	if(WeaponSlot2 != nullptr && !bWantsToFire && ActiveWeapon!=WeaponSlot2)
 	{
 		if(ActiveWeapon->IsReloading())
@@ -349,6 +374,8 @@ void APlayerCharacter::UseWeaponSlot2()
 
 void APlayerCharacter::Interact()
 {
+	if(bIsPauseMenuActive) return;
+	
 	if(ActiveWeaponState != EWeaponState::Idle && ActiveWeaponState != EWeaponState::Reloading)
 		return;
 	

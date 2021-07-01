@@ -47,9 +47,17 @@ private:
 
 	FGameplaySettings GameplaySettings;
 
+	bool bIsPauseMenuActive;
+
+public:
+
+	void SetIsPauseMenuActive(bool bActive) { bIsPauseMenuActive = bActive; }
+
 	/*
 	INPUT BINDING
 	*/
+
+private:
 
 	void MoveForward(float Value);
 	void MoveRight(float Value);

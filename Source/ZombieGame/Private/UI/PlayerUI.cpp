@@ -46,46 +46,75 @@ void UPlayerUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	if(HealthComp)
 	{
-		HealthText->SetText(FText::FromString(FString::SanitizeFloat(HealthComp->GetHealth())));
-		HealthBar->SetPercent(HealthComp->GetHealth()/MaxHealth);
+		if(HealthText)
+			HealthText->SetText(FText::FromString(FString::SanitizeFloat(HealthComp->GetHealth())));
+		if(HealthBar)
+			HealthBar->SetPercent(HealthComp->GetHealth()/MaxHealth);
 	}
 
-	AZWeapon* ActiveWeapon = OwnerPlayer->GetActiveWeapon();
-
-	if(ActiveWeapon != nullptr)
+	if(OwnerPlayer != nullptr)
 	{
-		if(LastActiveWeapon == nullptr || LastActiveWeapon != ActiveWeapon)
+		AZWeapon* ActiveWeapon = OwnerPlayer->GetActiveWeapon();
+		if(ActiveWeapon != nullptr)
 		{
-			LastActiveWeapon = ActiveWeapon;
-			
-			ClipAmmoText->SetVisibility(ESlateVisibility::Visible);
-			ReserveAmmoText->SetVisibility(ESlateVisibility::Visible);
-			AmmoDivider->SetVisibility(ESlateVisibility::Visible);
+			if(LastActiveWeapon == nullptr || LastActiveWeapon != ActiveWeapon)
+			{
+				LastActiveWeapon = ActiveWeapon;
 
-			if(ActiveWeapon->GetWeaponImageUI())
-			{
-				ActiveWeaponImage->SetBrushFromTexture(ActiveWeapon->GetWeaponImageUI());
-				ActiveWeaponImage->SetVisibility(ESlateVisibility::Visible);
-				PlayWeaponEquipAnimation();
+				if(ClipAmmoText)
+					ClipAmmoText->SetVisibility(ESlateVisibility::Visible);
+				if(ReserveAmmoText)
+					ReserveAmmoText->SetVisibility(ESlateVisibility::Visible);
+				if(AmmoDivider)
+					AmmoDivider->SetVisibility(ESlateVisibility::Visible);
+
+				if(ActiveWeaponImage != nullptr)
+				{
+					if(ActiveWeapon->GetWeaponImageUI())
+					{
+						ActiveWeaponImage->SetBrushFromTexture(ActiveWeapon->GetWeaponImageUI());
+						ActiveWeaponImage->SetVisibility(ESlateVisibility::Visible);
+						PlayWeaponEquipAnimation();
+					}
+					else
+					{
+						ActiveWeaponImage->SetVisibility(ESlateVisibility::Hidden);
+					}
+				}
 			}
-			else
-			{
-				ActiveWeaponImage->SetVisibility(ESlateVisibility::Hidden);
-			}
+
+			if(ClipAmmoText)
+				ClipAmmoText->SetText(FText::FromString(FString::FromInt(ActiveWeapon->GetCurrentClipAmmo())));
+			if(ReserveAmmoText)
+				ReserveAmmoText->SetText(FText::FromString(FString::FromInt(ActiveWeapon->GetCurrentReserveAmmo())));
 		}
-		
-		ClipAmmoText->SetText(FText::FromString(FString::FromInt(ActiveWeapon->GetCurrentClipAmmo())));
-		ReserveAmmoText->SetText(FText::FromString(FString::FromInt(ActiveWeapon->GetCurrentReserveAmmo())));
+		else
+		{
+			LastActiveWeapon = nullptr;
+
+			if(ClipAmmoText)
+				ClipAmmoText->SetVisibility(ESlateVisibility::Hidden);
+			if(ReserveAmmoText)
+				ReserveAmmoText->SetVisibility(ESlateVisibility::Hidden);
+			if(AmmoDivider)
+				AmmoDivider->SetVisibility(ESlateVisibility::Hidden);
+			if(ActiveWeaponImage)
+				ActiveWeaponImage->SetVisibility(ESlateVisibility::Hidden);
+		}
 	}
-	
+		
 	else
 	{
 		LastActiveWeapon = nullptr;
-		
-		ClipAmmoText->SetVisibility(ESlateVisibility::Hidden);
-		ReserveAmmoText->SetVisibility(ESlateVisibility::Hidden);
-		AmmoDivider->SetVisibility(ESlateVisibility::Hidden);
-		ActiveWeaponImage->SetVisibility(ESlateVisibility::Hidden);
+
+		if(ClipAmmoText)
+			ClipAmmoText->SetVisibility(ESlateVisibility::Hidden);
+		if(ReserveAmmoText)
+			ReserveAmmoText->SetVisibility(ESlateVisibility::Hidden);
+		if(AmmoDivider)
+			AmmoDivider->SetVisibility(ESlateVisibility::Hidden);
+		if(ActiveWeaponImage)
+			ActiveWeaponImage->SetVisibility(ESlateVisibility::Hidden);
 	}
 
 	Super::NativeTick(MyGeometry, InDeltaTime);

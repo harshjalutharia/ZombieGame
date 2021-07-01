@@ -35,7 +35,7 @@ public:
 	virtual void CancelServerSearch() = 0;
 
 	UFUNCTION(BlueprintCallable,BlueprintNativeEvent)
-	void ShowPauseMenu();
+	class UPauseMenu* LoadPauseMenu();
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	class ULobbyMenu* LoadLobbyMenu();

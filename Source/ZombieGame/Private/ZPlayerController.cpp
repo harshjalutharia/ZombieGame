@@ -2,6 +2,8 @@
 
 
 #include "ZPlayerController.h"
+
+#include "PlayerCharacter.h"
 #include "Blueprint/UserWidget.h"
 #include "ZPlayerCameraManager.h"
 #include "Interfaces/ZINT_GameInstance.h"
@@ -9,45 +11,65 @@
 
 AZPlayerController::AZPlayerController()
 {
-    PlayerCameraManagerClass = AZPlayerCameraManager::StaticClass();
+	PlayerCameraManagerClass = AZPlayerCameraManager::StaticClass();
+
+	bIsPauseMenuActive = false;
 }
 
 
 void AZPlayerController::AssignPlayerHUD_Implementation(UPlayerUI* NewHUD)
 {
-    PlayerHUD = NewHUD;
+	PlayerHUD = NewHUD;
 }
 
 
 void AZPlayerController::PlayLocalFiringEffects_Implementation(TSubclassOf<UMatineeCameraShake> FireCameraShake)
 {
-    ClientStartCameraShake(FireCameraShake);
+	ClientStartCameraShake(FireCameraShake);
 
-    if(PlayerHUD != nullptr)
-    {
-        PlayerHUD->PlayCrosshairRecoil();
-    }
+	if (PlayerHUD != nullptr)
+	{
+		PlayerHUD->PlayCrosshairRecoil();
+	}
 }
 
 
 void AZPlayerController::BeginPlay()
 {
-    Super::BeginPlay();
+	Super::BeginPlay();
+
+	if (GetGameInstance()->GetClass()->ImplementsInterface(UZINT_GameInstance::StaticClass()))
+	{
+		PauseMenu = IZINT_GameInstance::Execute_LoadPauseMenu(GetGameInstance());
+	}
 }
 
 
 void AZPlayerController::SetupInputComponent()
 {
-    Super::SetupInputComponent();
-    
-    InputComponent->BindAction("PauseMenu",IE_Pressed, this, &AZPlayerController::ShowPauseMenu);
+	Super::SetupInputComponent();
+
+	InputComponent->BindAction("PauseMenu", IE_Pressed, this, &AZPlayerController::TogglePauseMenu);
 }
 
 
-void AZPlayerController::ShowPauseMenu()
+void AZPlayerController::TogglePauseMenu()
 {
-    if(GetGameInstance()->GetClass()->ImplementsInterface(UZINT_GameInstance::StaticClass()))
-    {
-        IZINT_GameInstance::Execute_ShowPauseMenu(GetGameInstance());
-    }
+	if (PauseMenu != nullptr)
+	{
+		if (bIsPauseMenuActive)
+		{
+			PauseMenu->HidePauseMenu();
+			bIsPauseMenuActive = false;
+		}
+		else
+		{
+			PauseMenu->ShowPauseMenu();
+			bIsPauseMenuActive = true;
+		}
+
+		APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(GetPawn());
+		if(PlayerCharacter)
+			PlayerCharacter->SetIsPauseMenuActive(bIsPauseMenuActive);
+	}
 }

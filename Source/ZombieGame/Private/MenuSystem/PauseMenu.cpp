@@ -2,6 +2,8 @@
 
 
 #include "MenuSystem/PauseMenu.h"
+
+#include "ZPlayerController.h"
 #include "MenuSystem/OptionsMenu.h"
 #include "GameFramework/GameModeBase.h"
 #include "Components/Button.h"
@@ -57,9 +59,59 @@ void UPauseMenu::Setup(IZINT_GameInstance* NewInterface)
 }
 
 
+void UPauseMenu::ShowPauseMenu()
+{
+	if(!IsInViewport())
+	{
+		AddToViewport();
+		bIsFocusable = true;
+		
+		auto PC = GetOwningPlayer();
+		if(!ensure(PC!=nullptr)) return;
+
+		PC->bShowMouseCursor = true;
+		
+		if(GEngine && GEngine->GameViewport)
+		{
+			FVector2D ViewportSize = FVector2D(1.f);
+			GEngine->GameViewport->GetViewportSize(ViewportSize);
+			PC->SetMouseLocation(ViewportSize.X/2, ViewportSize.Y/2);
+		}
+
+		FInputModeGameAndUI InputModeData;
+		InputModeData.SetWidgetToFocus(TakeWidget());
+		InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		PC->SetInputMode(InputModeData);
+
+		if(WindowSwitcher != nullptr && StartMenu != nullptr)
+			WindowSwitcher->SetActiveWidget(StartMenu);
+	}
+}
+
+
+void UPauseMenu::HidePauseMenu()
+{
+	if(IsInViewport())
+	{
+		RemoveFromViewport();
+		bIsFocusable = false;
+
+		auto PC = GetOwningPlayer();
+		if(!ensure(PC!=nullptr)) return;
+
+		PC->bShowMouseCursor = false;
+
+		const FInputModeGameOnly InputModeData;
+		PC->SetInputMode(InputModeData);
+	}
+}
+
+
 void UPauseMenu::OnResumeButtonClicked()
 {
-	Teardown();
+	AZPlayerController* PlayerController = Cast<AZPlayerController>(GetOwningPlayer());
+	if(PlayerController != nullptr)
+		PlayerController->TogglePauseMenu();
 }
 
 

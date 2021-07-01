@@ -25,6 +25,10 @@ public:
 
 	virtual void Setup(IZINT_GameInstance* NewInterface) override;
 
+	void ShowPauseMenu();
+
+	void HidePauseMenu();
+
 private:
 
 	UPROPERTY(meta = (BindWidget))

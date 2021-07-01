@@ -5,6 +5,7 @@
 #include "MenuSystem/MainMenu.h"
 #include "MenuSystem/FindGamesMenu.h"
 #include "MenuSystem/LobbyMenu.h"
+#include "MenuSystem/PauseMenu.h"
 #include "LobbyGameMode.h"
 #include "PlayerCharacter.h"
 #include "UI/PlayerUI.h"
@@ -185,24 +186,6 @@ void UZCustomGameInstance::LoadLoadingScreen()
 }
 
 
-void UZCustomGameInstance::LoadPauseMenu()
-{
-	if(PauseMenu != nullptr)
-		return;
-	
-	if(!PauseMenuClass) return;
-
-	APlayerController* PC = GetFirstLocalPlayerController(GetWorld());
-	if(!ensure(PC!=nullptr)) return;
-
-	PauseMenu = CreateWidget<UMenuWidget>(PC,PauseMenuClass);
-	if(!ensure(PauseMenu!=nullptr)) return;
-
-	PauseMenu->Setup(this);
-	PauseMenu->ShowMenu(true);
-}
-
-
 void UZCustomGameInstance::Host(FString& ServerName, FString& Password, uint8 GameModeIndex, uint8 MapIndex, uint8 MaxPlayers, bool bLanMatch)
 {
 	if(SessionInterface.IsValid())
@@ -311,16 +294,23 @@ void UZCustomGameInstance::CancelServerSearch()
 }
 
 
-void UZCustomGameInstance::ShowPauseMenu_Implementation()
+UPauseMenu* UZCustomGameInstance::LoadPauseMenu_Implementation()
 {
+	if(!PauseMenuClass)
+		return nullptr;
+
 	if(PauseMenu != nullptr)
-	{
-		PauseMenu->ShowMenu();
-	}
-	else
-	{
-		LoadPauseMenu();
-	}
+		return PauseMenu;
+
+	APlayerController* PC = GetFirstLocalPlayerController(GetWorld());
+	if(!ensure(PC!=nullptr)) return nullptr;
+
+	PauseMenu = CreateWidget<UPauseMenu>(PC,PauseMenuClass);
+	if(!ensure(PauseMenu!=nullptr)) return nullptr;
+
+	PauseMenu->Setup(this);
+
+	return PauseMenu;
 }
 
 
