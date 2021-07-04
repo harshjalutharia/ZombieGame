@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Structs/LobbyServerInfo.h"
 #include "Structs/LobbyPlayerInfo.h"
+#include "ZombieGame/ZEnums.h"
 #include "LobbyPlayerController.generated.h"
 
 
@@ -79,7 +80,7 @@ public:
 	void Server_SendChatMessage(const FString& Message);
 
 	UFUNCTION(Client, Reliable)
-	void Client_DisplayBroadcastedMessage(const FString& Message);
+	void Client_DisplayBroadcastedMessage(const FString& PlayerName, const FString& Message, const EChatLogType ChatLogType);
 
 	int32 GetSelfPlayerID() const { return SelfPlayerInfo.PlayerID; }
 

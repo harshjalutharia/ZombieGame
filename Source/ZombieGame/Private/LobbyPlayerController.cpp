@@ -158,11 +158,11 @@ bool ALobbyPlayerController::Server_SendChatMessage_Validate(const FString& Mess
 }
 
 
-void ALobbyPlayerController::Client_DisplayBroadcastedMessage_Implementation(const FString& Message)
+void ALobbyPlayerController::Client_DisplayBroadcastedMessage_Implementation(const FString& PlayerName, const FString& Message, const EChatLogType ChatLogType)
 {
 	if(IsLocalController() && LobbyMenu!=nullptr)
 	{
-		LobbyMenu->AddMessageToChatWindow(Message);
+		LobbyMenu->AddMessageToChatWindow(PlayerName,Message, ChatLogType);
 	}
 }
 

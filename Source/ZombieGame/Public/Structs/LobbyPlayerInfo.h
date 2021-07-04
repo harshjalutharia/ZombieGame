@@ -8,7 +8,7 @@ struct FLobbyPlayerInfo
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadWrite)
 	FString PlayerName;
 
 	UPROPERTY(BlueprintReadWrite)

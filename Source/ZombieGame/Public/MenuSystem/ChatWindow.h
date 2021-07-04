@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "MenuSystem/MenuWidget.h"
+#include "ZombieGame/ZEnums.h"
 #include "ChatWindow.generated.h"
 
 class UEditableTextBox;
@@ -45,5 +46,5 @@ public:
 
 	void SetLobbyPlayerControllerReference(ALobbyPlayerController* InPlayerController) { LobbyPCRef = InPlayerController; }
 
-	void AddMessageToChatWindow(const FString& Message);
+	void AddMessageToChatWindow(const FString& PlayerName, const FString& Message, const EChatLogType ChatLogType);
 };

@@ -51,10 +51,17 @@ void ALobbyGameMode::Logout(AController* Exiting)
 	if(PC)
 	{
 		const int32 ExitingPlayerID = ConnectedPlayersInfo[PC].PlayerID;
+		const FString ExitingPlayerName = ConnectedPlayersInfo[PC].PlayerName;
+		
 		ConnectedPlayers.Remove(PC);
 		ConnectedPlayersInfo.Remove(PC);
 
 		NotifyClientsOfPlayerLeave(ExitingPlayerID);
+
+		for(auto PlayerController : ConnectedPlayers)
+		{
+			PlayerController->Client_DisplayBroadcastedMessage(ExitingPlayerName,"left the lobby",EChatLogType::Error);
+		}
 	}
 
 	Super::Logout(Exiting);
@@ -91,6 +98,7 @@ void ALobbyGameMode::SetPlayerInfo(ALobbyPlayerController* InPlayerController, F
 		for(auto PC : ConnectedPlayers)
 		{
 			PC->UpdateAllPlayersInfo(OutAllPlayersInfo);
+			PC->Client_DisplayBroadcastedMessage(PlayerInfo.PlayerName,"joined the lobby",EChatLogType::System);
 		}
 	}
 }
@@ -137,22 +145,19 @@ void ALobbyGameMode::KickPlayer(int32 KickPlayerID)
 
 void ALobbyGameMode::SendChatMessage(int32 PlayerID, const FString& Message)
 {
-	FString OutMessage;
+	FString PlayerName;
 	for(auto& Player : ConnectedPlayersInfo)
 	{
 		if(Player.Value.PlayerID == PlayerID)
 		{
-			OutMessage = Player.Value.PlayerName;
-			OutMessage.Append(": ");
+			PlayerName = Player.Value.PlayerName;
 			break;
 		}
 	}
-
-	OutMessage.Append(Message);
 	
 	for(auto PC : ConnectedPlayers)
 	{
-		PC->Client_DisplayBroadcastedMessage(OutMessage);
+		PC->Client_DisplayBroadcastedMessage(PlayerName,Message,EChatLogType::Default);
 	}
 }
 

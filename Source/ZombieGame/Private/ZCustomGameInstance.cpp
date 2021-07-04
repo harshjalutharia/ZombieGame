@@ -112,12 +112,6 @@ void UZCustomGameInstance::Init()
 		UE_LOG(LogTemp, Error, TEXT("Failed to get Online Subsystem"));
 	}
 
-	LobbyPlayerInfo.PlayerName = "LOREM IPSUM";
-
-	/*const IOnlineIdentityPtr IdentityInterface = Subsystem->GetIdentityInterface();
-	if(IdentityInterface)
-		LobbyPlayerInfo.PlayerName = IdentityInterface->GetPlayerNickname(0);*/
-
 	LoadGameplaySettingsFromFile();
 	
 	GetEngine()->OnNetworkFailure().AddUObject(this, &UZCustomGameInstance::HandleNetworkFailure);

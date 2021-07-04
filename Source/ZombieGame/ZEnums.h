@@ -30,3 +30,12 @@ enum class EWeaponType : uint8
 	SecondaryWeapon,
 	MeleeWeapon
 };
+
+
+UENUM()
+enum class EChatLogType : uint8
+{
+	Default,
+	Error,
+	System
+};

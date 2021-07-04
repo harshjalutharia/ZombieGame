@@ -42,15 +42,16 @@ void UChatWindow::Setup(IZINT_GameInstance* NewInterface)
 }
 
 
-void UChatWindow::AddMessageToChatWindow(const FString& Message)
+void UChatWindow::AddMessageToChatWindow(const FString& PlayerName, const FString& Message, const EChatLogType ChatLogType)
 {
 	if(ChatLog != nullptr && ChatTextWidgetClass != nullptr)
 	{
 		UChatText* NewText = CreateWidget<UChatText>(this, ChatTextWidgetClass);
 		if(NewText != nullptr)
 		{
-			NewText->SetMessage(Message);
+			NewText->SetMessage(PlayerName,Message,ChatLogType);
 			ChatLog->AddChild(NewText);
+			ChatLog->ScrollToEnd();
 		}
 	}
 }

@@ -434,7 +434,7 @@ void ULobbyMenu::UpdateAllPlayersInfo(const TArray<FLobbyPlayerInfo>& InLobbyPla
 			UConnectedPlayer* Player = CreateWidget<UConnectedPlayer>(this,ConnectedPlayerWidgetClass);
 			if(Player != nullptr)
 			{
-				Player->SetPlayerNameAndAvatar(PlayerInfo.PlayerName);
+				Player->SetPlayerNameAndAvatar(PlayerInfo.PlayerName, PlayerInfo.PlayerAvatarImage);
 				Player->SetPlayerStatus(PlayerInfo.bIsReady);
 				PlayerListScrollBox->AddChild(Player);
 			}
@@ -458,10 +458,10 @@ int32 ULobbyMenu::GetSelfPlayerID() const
 }
 
 
-void ULobbyMenu::AddMessageToChatWindow(const FString& Message)
+void ULobbyMenu::AddMessageToChatWindow(const FString& PlayerName, const FString& Message, const EChatLogType ChatLogType)
 {
 	if(ChatWindow != nullptr)
 	{
-		ChatWindow->AddMessageToChatWindow(Message);
+		ChatWindow->AddMessageToChatWindow(PlayerName,Message, ChatLogType);
 	}
 }

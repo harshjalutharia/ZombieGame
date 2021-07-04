@@ -82,8 +82,6 @@ public:
 
 	virtual void HostUpdateLobbyServerInfo(uint8 GameModeIndex, uint8 MapIndex, uint8 ScoreLimitIndex, uint8 TimeLimitIndex) override;
 
-	virtual void GetPlayerInfo_Implementation(FLobbyPlayerInfo& OutPlayerInfo) const override { OutPlayerInfo = LobbyPlayerInfo; }
-
 	virtual void StartGame() override;
 
 	/*
@@ -171,15 +169,19 @@ private:
 	void DestroySessionCaller();
 
 	/*
-	 *Player info
-	 */
+	*Player info
+	*/
 
-	UPROPERTY(EditAnywhere)
+protected:
+
+	UPROPERTY(BlueprintReadWrite)
 	FLobbyPlayerInfo LobbyPlayerInfo;
 
 	/*
 	 *Saving and Loading Settings
 	 */
+
+private:
 	
 	FGameplaySettings GameplaySettings;
 

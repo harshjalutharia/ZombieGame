@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "ZombieGame/ZEnums.h"
 #include "ChatText.generated.h"
 
 /**
@@ -15,10 +16,10 @@ class ZOMBIEGAME_API UChatText : public UUserWidget
 	GENERATED_BODY()
 
 	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* ChatMessage;
+	class URichTextBlock* ChatMessage;
 
 public:
 
-	void SetMessage(const FString& Message);
+	void SetMessage(const FString& PlayerName, const FString& Message, const EChatLogType ChatLogType);
 	
 };

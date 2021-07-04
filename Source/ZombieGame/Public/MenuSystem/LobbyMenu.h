@@ -6,6 +6,7 @@
 #include "Structs/LobbyServerInfo.h"
 #include "Structs/LobbyPlayerInfo.h"
 #include "MenuSystem/MenuWidget.h"
+#include "ZombieGame/ZEnums.h"
 #include "LobbyMenu.generated.h"
 
 class ALobbyPlayerController;
@@ -266,6 +267,6 @@ public:
 
 	int32 GetSelfPlayerID() const;
 
-	void AddMessageToChatWindow(const FString& Message);
+	void AddMessageToChatWindow(const FString& PlayerName, const FString& Message, const EChatLogType ChatLogType);
 	
 };

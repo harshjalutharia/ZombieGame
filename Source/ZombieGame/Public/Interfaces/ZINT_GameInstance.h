@@ -64,7 +64,7 @@ public:
 	virtual void HostUpdateLobbyServerInfo(uint8 GameModeIndex, uint8 MapIndex, uint8 ScoreLimitIndex, uint8 TimeLimitIndex) = 0;
 
 	UFUNCTION(BlueprintCallable,BlueprintNativeEvent)
-	void GetPlayerInfo(FLobbyPlayerInfo& OutPlayerInfo) const;
+	void GetPlayerInfo(FLobbyPlayerInfo& OutPlayerInfo);
 
 	virtual void StartGame() = 0;
 };
