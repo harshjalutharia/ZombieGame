@@ -38,7 +38,7 @@ private:
 
 	void NotifyClientsOfPlayerLeave(int32 LeavingPlayerID);
 
-	int32 PlayerIDIterator;
+	uint8 PlayerIDIterator;
 
 	UPROPERTY()
 	TArray<class ALobbyPlayerController*> ConnectedPlayers;

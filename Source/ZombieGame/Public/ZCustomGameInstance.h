@@ -8,7 +8,6 @@
 #include "Structs/ServerSettings.h"
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
-#include "Interfaces/OnlineIdentityInterface.h"
 #include "OnlineSessionSettings.h"
 #include "ZCustomGameInstance.generated.h"
 
@@ -81,6 +80,8 @@ public:
 	virtual void GetCurrentLobbyInfoIndexes(uint8& OutGameModeIndex, uint8& OutMapIndex, uint8& OutScoreLimitIndex, uint8& OutTimeLimitIndex) override;
 
 	virtual void HostUpdateLobbyServerInfo(uint8 GameModeIndex, uint8 MapIndex, uint8 ScoreLimitIndex, uint8 TimeLimitIndex) override;
+
+	virtual void GetPlayerInfo_Implementation(FLobbyPlayerInfo& OutPlayerInfo) override;
 
 	virtual void StartGame() override;
 
@@ -176,6 +177,9 @@ protected:
 
 	UPROPERTY(BlueprintReadWrite)
 	FLobbyPlayerInfo LobbyPlayerInfo;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void LoadPlayerInfoFromSubsystem();
 
 	/*
 	 *Saving and Loading Settings

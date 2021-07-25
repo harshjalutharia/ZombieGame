@@ -36,19 +36,16 @@ void UMenuWidget::DisplayMenu(bool bShowCursor)
 
 void UMenuWidget::Teardown()
 {
-	if(IsInViewport())
-	{
-		RemoveFromParent();
-		bIsFocusable = false;
+	RemoveFromParent();
+	bIsFocusable = false;
 
-		auto PC = GetOwningPlayer();
-		if(!ensure(PC!=nullptr)) return;
+	auto PC = GetOwningPlayer();
+	if(!ensure(PC!=nullptr)) return;
 
-		PC->bShowMouseCursor = false;
+	PC->bShowMouseCursor = false;
 
-		const FInputModeGameOnly InputModeData;
-		PC->SetInputMode(InputModeData);
-	}
+	const FInputModeGameOnly InputModeData;
+	PC->SetInputMode(InputModeData);
 }
 
 

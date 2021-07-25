@@ -2,3 +2,9 @@
 
 
 #include "SurvivalGameMode.h"
+
+
+ASurvivalGameMode::ASurvivalGameMode(const FObjectInitializer& ObjectInitializer)
+{
+	bUseSeamlessTravel = true;
+}

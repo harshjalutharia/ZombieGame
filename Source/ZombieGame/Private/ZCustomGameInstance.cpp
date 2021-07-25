@@ -125,14 +125,14 @@ void UZCustomGameInstance::LoadPlayerHUD()
 {
 	if(!PlayerUIClass) return;
 
+	if(PlayerUI != nullptr)
+		PlayerUI->RemoveFromParent();
+
 	APlayerController* PC = GetFirstLocalPlayerController(GetWorld());
 	if(!ensure(PC!=nullptr)) return;
 
-	if(PlayerUI == nullptr)
-	{
-		PlayerUI = CreateWidget<UPlayerUI>(PC,PlayerUIClass);
-		if(!ensure(PlayerUI!=nullptr)) return;
-	}
+	PlayerUI = CreateWidget<UPlayerUI>(PC,PlayerUIClass);
+	if(!ensure(PlayerUI!=nullptr)) return;
 
 	PlayerUI->AddToViewport();
 
@@ -162,6 +162,8 @@ void UZCustomGameInstance::LoadMainMenu()
 	MainMenu->ShowMenu(true);
 
 	DestroySessionCaller();
+	
+	LoadPlayerInfoFromSubsystem();
 }
 
 
@@ -194,6 +196,8 @@ void UZCustomGameInstance::Host(FString& ServerName, FString& Password, uint8 Ga
 		SessionSettings.NumPublicConnections = MaxPlayers;
 		SessionSettings.bShouldAdvertise = true;
 		SessionSettings.bUsesPresence = true;
+		SessionSettings.bAllowJoinInProgress = true;
+		SessionSettings.bAllowJoinViaPresence = true;
 		SessionSettings.bIsLANMatch = bLanMatch;
 		
 		SessionSettings.Set(SESSION_SETTINGS_SEARCH_KEY, SESSION_SETTINGS_SEARCH_VALUE, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
@@ -434,6 +438,12 @@ void UZCustomGameInstance::HostUpdateLobbyServerInfo(uint8 GameModeIndex, uint8 
 
 		SessionInterface->UpdateSession(SESSION_NAME,*SessionSettings,true);
 	}
+}
+
+
+void UZCustomGameInstance::GetPlayerInfo_Implementation(FLobbyPlayerInfo& OutPlayerInfo)
+{
+	OutPlayerInfo = LobbyPlayerInfo;
 }
 
 

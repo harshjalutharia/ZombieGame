@@ -18,7 +18,10 @@ struct FLobbyPlayerInfo
 	bool bIsReady = false;
 
 	UPROPERTY()
-	int32 PlayerID;
+	uint8 PlayerID;
+
+	UPROPERTY(BlueprintReadWrite)
+	FString UniqueNetPlayerIDString;
 
 	FLobbyPlayerInfo()
 	{
@@ -26,14 +29,16 @@ struct FLobbyPlayerInfo
 		PlayerAvatarImage = nullptr;
 		bIsReady = false;
 		PlayerID = -1;
+		UniqueNetPlayerIDString = "";
 	}
 
-	FLobbyPlayerInfo(FString InName, UTexture2D* InAvatarImage, bool InIsReady, int32 InPlayerID)
+	FLobbyPlayerInfo(FString InName, UTexture2D* InAvatarImage, bool InIsReady, int32 InPlayerID, FString InUniqueNetPlayerIDString)
 	{
 		PlayerName = InName;
 		PlayerAvatarImage = InAvatarImage;
 		bIsReady = InIsReady;
 		PlayerID = InPlayerID;
+		UniqueNetPlayerIDString = InUniqueNetPlayerIDString;
 	}
 
 	FLobbyPlayerInfo(const FLobbyPlayerInfo& PlayerInfo)
@@ -42,5 +47,6 @@ struct FLobbyPlayerInfo
 		PlayerAvatarImage = PlayerInfo.PlayerAvatarImage;
 		bIsReady = PlayerInfo.bIsReady;
 		PlayerID = PlayerInfo.PlayerID;
+		UniqueNetPlayerIDString = PlayerInfo.UniqueNetPlayerIDString;
 	}
 };

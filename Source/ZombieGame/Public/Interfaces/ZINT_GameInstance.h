@@ -66,5 +66,8 @@ public:
 	UFUNCTION(BlueprintCallable,BlueprintNativeEvent)
 	void GetPlayerInfo(FLobbyPlayerInfo& OutPlayerInfo);
 
+	UFUNCTION(BlueprintCallable,BlueprintNativeEvent)
+	UTexture2D* GetPlayerAvatarImage(const FString& UniquePlayerIdString);
+
 	virtual void StartGame() = 0;
 };

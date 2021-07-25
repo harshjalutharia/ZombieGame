@@ -68,8 +68,13 @@ void ALobbyPlayerController::UpdateAllPlayersInfo(const TArray<FLobbyPlayerInfo>
 {
 	AllPlayersInfo = InAllPlayersInfo;
 
-	if(IsLocalController() && LobbyMenu != nullptr)
-		LobbyMenu->UpdateAllPlayersInfo(AllPlayersInfo);
+	if(IsLocalController())
+	{
+		LoadAllPlayerImages();
+		
+		if(LobbyMenu != nullptr)
+			LobbyMenu->UpdateAllPlayersInfo(AllPlayersInfo);
+	}
 }
 
 
@@ -89,6 +94,24 @@ void ALobbyPlayerController::UpdatePlayerInfoReadyStatus(int32 PlayerID, bool bI
 }
 
 
+void ALobbyPlayerController::LoadAllPlayerImages()
+{
+	if(GetGameInstance() != nullptr)
+	{
+		for(auto& PlayerInfo : AllPlayersInfo)
+		{
+			if(PlayerInfo.PlayerAvatarImage==nullptr)
+			{
+				if(GetGameInstance()->GetClass()->ImplementsInterface(UZINT_GameInstance::StaticClass()))
+				{
+					PlayerInfo.PlayerAvatarImage = IZINT_GameInstance::Execute_GetPlayerAvatarImage(GetGameInstance(), PlayerInfo.UniqueNetPlayerIDString);
+				}
+			}
+		}
+	}
+}
+
+
 void ALobbyPlayerController::OnRep_LobbyServerInfo()
 {
 	if(LobbyMenu != nullptr)
@@ -98,6 +121,8 @@ void ALobbyPlayerController::OnRep_LobbyServerInfo()
 
 void ALobbyPlayerController::OnRep_AllPlayersInfo()
 {
+	LoadAllPlayerImages();
+	
 	if(LobbyMenu != nullptr)
 		LobbyMenu->UpdateAllPlayersInfo(AllPlayersInfo);
 }

@@ -39,6 +39,9 @@ private:
 
 	UFUNCTION()
 	void OnChatEntryCommitted(const FText& Text, ETextCommit::Type CommitMethod);
+
+	UFUNCTION()
+	void SetChatBoxFocus();
 	
 public:
 

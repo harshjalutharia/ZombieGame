@@ -56,6 +56,8 @@ public:
 
 private:
 
+	void LoadAllPlayerImages();
+
 	UFUNCTION()
 	void OnRep_LobbyServerInfo();
 

@@ -27,10 +27,22 @@ bool UChatWindow::Initialize()
 void UChatWindow::OnChatEntryCommitted(const FText& Text, ETextCommit::Type CommitMethod)
 {
 	if(LobbyPCRef != nullptr && CommitMethod==ETextCommit::OnEnter)
+	{
 		LobbyPCRef->Server_SendChatMessage(Text.ToString());
+		if(ChatEntry != nullptr)
+		{
+			ChatEntry->SetText(FText::FromString(""));
+			FTimerHandle TempHandle;
+			GetWorld()->GetTimerManager().SetTimer(TempHandle,this, &UChatWindow::SetChatBoxFocus, 0.1f,false);
+		}
+	}
+}
 
+
+void UChatWindow::SetChatBoxFocus()
+{
 	if(ChatEntry != nullptr)
-		ChatEntry->SetText(FText::FromString(""));
+		ChatEntry->SetFocus();
 }
 
 
