@@ -5,6 +5,7 @@
 #include "Interfaces/ZINT_GameInstance.h"
 #include "MenuSystem/LobbyMenu.h"
 #include "LobbyGameMode.h"
+#include "ZCustomGameInstance.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -38,8 +39,17 @@ void ALobbyPlayerController::Client_SendPlayerInfoToServer_Implementation(int32 
 		if(GetGameInstance()->GetClass()->ImplementsInterface(UZINT_GameInstance::StaticClass()))
 		{
 			IZINT_GameInstance::Execute_GetPlayerInfo(GetGameInstance(),SelfPlayerInfo);
-			SelfPlayerInfo.bIsReady = GetWorld()->IsServer() ? true : false;
 			SelfPlayerInfo.PlayerID = PlayerID;
+			if(SelfPlayerInfo.PlayerID == 0)
+			{
+				SelfPlayerInfo.bIsReady = true;
+				SelfPlayerInfo.bIsHost = true;
+			}
+			else
+			{
+				SelfPlayerInfo.bIsReady = false;
+				SelfPlayerInfo.bIsHost = false;
+			}
 			Server_SetPlayerInfo(SelfPlayerInfo);
 		}
 	}
@@ -72,7 +82,7 @@ void ALobbyPlayerController::UpdateAllPlayersInfo(const TArray<FLobbyPlayerInfo>
 	{
 		LoadAllPlayerImages();
 		
-		if(LobbyMenu != nullptr)
+		if(IsLocalPlayerController() && LobbyMenu != nullptr)
 			LobbyMenu->UpdateAllPlayersInfo(AllPlayersInfo);
 	}
 }
@@ -89,7 +99,7 @@ void ALobbyPlayerController::UpdatePlayerInfoReadyStatus(int32 PlayerID, bool bI
 		}
 	}
 
-	if(LobbyMenu != nullptr)
+	if(IsLocalPlayerController() && LobbyMenu != nullptr)
 		LobbyMenu->UpdateAllPlayersInfo(AllPlayersInfo);
 }
 
@@ -205,6 +215,16 @@ void ALobbyPlayerController::RemovePlayerFromAllPlayersInfo(const int32 LeavingP
 
 	if(IsLocalController() && LobbyMenu != nullptr)
 		LobbyMenu->UpdateAllPlayersInfo(AllPlayersInfo);
+}
+
+
+void ALobbyPlayerController::Client_ShowLoadingScreen_Implementation()
+{
+	UZCustomGameInstance* GameInstance = Cast<UZCustomGameInstance>(GetGameInstance());
+	if(GameInstance != nullptr)
+	{
+		GameInstance->ShowLoadingScreen();
+	}
 }
 
 

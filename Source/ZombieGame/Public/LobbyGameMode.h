@@ -34,11 +34,13 @@ public:
 
 	void SendChatMessage(int32 PlayerID, const FString& Message);
 
+	void StartGame();
+
 private:
 
 	void NotifyClientsOfPlayerLeave(int32 LeavingPlayerID);
 
-	uint8 PlayerIDIterator;
+	int32 PlayerIDIterator;
 
 	UPROPERTY()
 	TArray<class ALobbyPlayerController*> ConnectedPlayers;

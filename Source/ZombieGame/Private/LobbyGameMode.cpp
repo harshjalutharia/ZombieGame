@@ -3,6 +3,7 @@
 
 #include "LobbyGameMode.h"
 #include "LobbyPlayerController.h"
+#include "ZCustomGameInstance.h"
 #include "GameFramework/GameSession.h"
 #include "Interfaces/ZINT_GameInstance.h"
 
@@ -20,6 +21,7 @@ ALobbyGameMode::ALobbyGameMode(const FObjectInitializer& ObjectInitializer)
 
 void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 {
+	Super::PostLogin(NewPlayer);
 	ALobbyPlayerController* PC = Cast<ALobbyPlayerController>(NewPlayer);
 	if(PC)
 	{
@@ -40,27 +42,28 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 		PC->Setup(NewInfo.PlayerID, this);
 		PC->UpdateLobbyInfo(LobbyServerInfo);
 	}
-
-	Super::PostLogin(NewPlayer);
 }
 
 
 void ALobbyGameMode::Logout(AController* Exiting)
 {
-	ALobbyPlayerController* PC = Cast<ALobbyPlayerController>(Exiting);
-	if(PC)
+	if(!Exiting->IsLocalController())
 	{
-		const int32 ExitingPlayerID = ConnectedPlayersInfo[PC].PlayerID;
-		const FString ExitingPlayerName = ConnectedPlayersInfo[PC].PlayerName;
-		
-		ConnectedPlayers.Remove(PC);
-		ConnectedPlayersInfo.Remove(PC);
-
-		NotifyClientsOfPlayerLeave(ExitingPlayerID);
-
-		for(auto PlayerController : ConnectedPlayers)
+		ALobbyPlayerController* PC = Cast<ALobbyPlayerController>(Exiting);
+		if(PC)
 		{
-			PlayerController->Client_DisplayBroadcastedMessage(ExitingPlayerName,"left the lobby",EChatLogType::Error);
+			const int32 ExitingPlayerID = ConnectedPlayersInfo[PC].PlayerID;
+			const FString ExitingPlayerName = ConnectedPlayersInfo[PC].PlayerName;
+
+			ConnectedPlayers.Remove(PC);
+			ConnectedPlayersInfo.Remove(PC);
+
+			NotifyClientsOfPlayerLeave(ExitingPlayerID);
+
+			for(auto PlayerController : ConnectedPlayers)
+			{
+				PlayerController->Client_DisplayBroadcastedMessage(ExitingPlayerName,"left the lobby",EChatLogType::Error);
+			}
 		}
 	}
 
@@ -73,6 +76,20 @@ void ALobbyGameMode::UpdateLobbyServerInfoOnClients(FLobbyServerInfo& LobbyServe
 	for(auto PC : ConnectedPlayers)
 	{
 		PC->UpdateLobbyInfo(LobbyServerInfo);
+	}
+
+	for(auto& Player : ConnectedPlayersInfo)
+	{
+		if(!Player.Value.bIsHost)
+			Player.Value.bIsReady = false;
+	}
+	
+	TArray<FLobbyPlayerInfo> OutAllPlayersInfo;
+	ConnectedPlayersInfo.GenerateValueArray(OutAllPlayersInfo);
+	
+	for(auto PC : ConnectedPlayers)
+	{
+		PC->UpdateAllPlayersInfo(OutAllPlayersInfo);
 	}
 }
 
@@ -158,6 +175,20 @@ void ALobbyGameMode::SendChatMessage(int32 PlayerID, const FString& Message)
 	for(auto PC : ConnectedPlayers)
 	{
 		PC->Client_DisplayBroadcastedMessage(PlayerName,Message,EChatLogType::Default);
+	}
+}
+
+
+void ALobbyGameMode::StartGame()
+{
+	for(auto PC : ConnectedPlayers)
+	{
+		PC->Client_ShowLoadingScreen();
+	}
+	UZCustomGameInstance* GameInstance = Cast<UZCustomGameInstance>(GetGameInstance());
+	if(GameInstance != nullptr)
+	{
+		GameInstance->StartGame();
 	}
 }
 

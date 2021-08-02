@@ -245,9 +245,9 @@ private:
 	 *Helper Functions
 	 */
 
-	void SetAsReady();
+	void SetAsReady(bool bInformServer);
 
-	void SetAsNotReady();
+	void SetAsNotReady(bool bInformServer);
 
 	void TryStartSession();
 

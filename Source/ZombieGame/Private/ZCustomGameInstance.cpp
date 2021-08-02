@@ -12,6 +12,7 @@
 #include "Interfaces/ZINT_ZPlayerController.h"
 #include "SaveGames/OptionsSaveGame.h"
 #include "Kismet/GameplayStatics.h"
+#include "MenuSystem/LoadingScreen.h"
 
 
 const static FName SESSION_NAME = TEXT("MyLocalSessionName");
@@ -100,6 +101,8 @@ UZCustomGameInstance::UZCustomGameInstance(const FObjectInitializer& ObjectIniti
 
 void UZCustomGameInstance::Init()
 {
+	Super::Init();
+	
 	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
 	if(Subsystem != nullptr)
 	{
@@ -116,8 +119,6 @@ void UZCustomGameInstance::Init()
 	
 	GetEngine()->OnNetworkFailure().AddUObject(this, &UZCustomGameInstance::HandleNetworkFailure);
 	GetEngine()->OnTravelFailure().AddUObject(this, &UZCustomGameInstance::HandleTravelFailure);
-	
-	Super::Init();
 }
 
 
@@ -133,6 +134,8 @@ void UZCustomGameInstance::LoadPlayerHUD()
 
 	PlayerUI = CreateWidget<UPlayerUI>(PC,PlayerUIClass);
 	if(!ensure(PlayerUI!=nullptr)) return;
+
+	HideLoadingScreen();
 
 	PlayerUI->AddToViewport();
 
@@ -164,21 +167,6 @@ void UZCustomGameInstance::LoadMainMenu()
 	DestroySessionCaller();
 	
 	LoadPlayerInfoFromSubsystem();
-}
-
-
-void UZCustomGameInstance::LoadLoadingScreen()
-{
-	if(!LoadingScreenClass) return;
-
-	APlayerController* PC = GetFirstLocalPlayerController(GetWorld());
-	if(!ensure(PC!=nullptr)) return;
-
-	UMenuWidget* LoadingScreen = CreateWidget<UMenuWidget>(PC,LoadingScreenClass);
-	if(!ensure(LoadingScreen!=nullptr)) return;
-
-	LoadingScreen->Setup(this);
-	LoadingScreen->ShowMenu(false);
 }
 
 
@@ -551,8 +539,6 @@ void UZCustomGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessi
 			FString ConnectInfo;
 			if(SessionInterface->GetResolvedConnectString(SESSION_NAME, ConnectInfo))
 			{
-				TriggerLoadingPopup(false);
-				
 				APlayerController* PC = GetFirstLocalPlayerController();
 				if(PC != nullptr)
 					PC->ClientTravel(ConnectInfo, ETravelType::TRAVEL_Absolute);
@@ -692,4 +678,24 @@ void UZCustomGameInstance::SetLobbyInfo(FString& InServerName, FString& InPasswo
 	SelectedGameModeIndex = InCustomGameModeIndex;
 	SelectedScoreLimitIndex = 0;
 	SelectedTimeLimitIndex = 0;
+}
+
+
+void UZCustomGameInstance::ShowLoadingScreen()
+{
+	if(LoadingScreen==nullptr)
+	{
+		LoadingScreen = CreateWidget<ULoadingScreen>(this,LoadingScreenClass);
+		if(!ensure(LoadingScreen!=nullptr)) return;
+	}
+	
+	GetGameViewportClient()->AddViewportWidgetContent(LoadingScreen->TakeWidget(),10);
+	LoadingScreen->PlayFadeInAnimation();
+}
+
+
+void UZCustomGameInstance::HideLoadingScreen()
+{
+	if(LoadingScreen != nullptr)
+		LoadingScreen->PlayFadeOutAnimation();
 }

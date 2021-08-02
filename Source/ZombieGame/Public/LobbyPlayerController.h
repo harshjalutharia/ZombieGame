@@ -18,8 +18,6 @@ class ZOMBIEGAME_API ALobbyPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
-private:
-
 	UPROPERTY(ReplicatedUsing=OnRep_LobbyServerInfo)
 	FLobbyServerInfo LobbyServerInfo;
 
@@ -87,5 +85,7 @@ public:
 	int32 GetSelfPlayerID() const { return SelfPlayerInfo.PlayerID; }
 
 	void RemovePlayerFromAllPlayersInfo(const int32 LeavingPlayerID);
-	
+
+	UFUNCTION(Client, Reliable)
+	void Client_ShowLoadingScreen();
 };

@@ -40,9 +40,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void LoadMainMenu();
 
-	UFUNCTION(BlueprintCallable)
-    void LoadLoadingScreen();
-
 	/*
 	Interface Functions
 	*/
@@ -106,6 +103,9 @@ private:
 	UPROPERTY()
 	class UPauseMenu* PauseMenu;
 
+	UPROPERTY()
+	class ULoadingScreen* LoadingScreen;
+
 	TSubclassOf<UUserWidget> MainMenuClass;
 	TSubclassOf<UUserWidget> PlayerUIClass;
 	TSubclassOf<UUserWidget> PauseMenuClass;
@@ -163,6 +163,8 @@ private:
 
 	void HandleTravelFailure( UWorld* InWorld, ETravelFailure::Type FailureType, const FString& ErrorString);
 
+public:
+
 	void TriggerError(FString ErrorMessage);
 
 	void TriggerLoadingPopup(bool bShowPopup, FString Message = "");
@@ -203,5 +205,14 @@ private:
 	 */
 
 	void SetLobbyInfo(FString& InServerName, FString& InPassword, uint8 InGameMapIndex, uint8 InCustomGameModeIndex, uint8 InMaxPlayers);
+
+	/*
+	 *Loading Screen Functions
+	 */
+
+public:
+
+	void ShowLoadingScreen();
+	void HideLoadingScreen();
 	
 };

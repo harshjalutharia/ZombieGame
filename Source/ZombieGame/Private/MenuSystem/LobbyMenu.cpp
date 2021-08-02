@@ -15,6 +15,7 @@
 #include "Interfaces/ZINT_GameInstance.h"
 #include "GameFramework/GameModeBase.h"
 #include "MenuSystem/ChatWindow.h"
+#include "LobbyGameMode.h"
 
 
 bool ULobbyMenu::Initialize()
@@ -161,9 +162,9 @@ void ULobbyMenu::OnStartReadyButtonClicked()
 	else
 	{
 		if(bIsReady)
-			SetAsNotReady();
+			SetAsNotReady(true);
 		else
-			SetAsReady();
+			SetAsReady(true);
 	}
 }
 
@@ -179,7 +180,7 @@ void ULobbyMenu::OnChangeSettingsButtonClicked()
 	if(ServerSettingsWindow != nullptr)
 		ServerSettingsWindow->ShowSettingsWindow();
 
-	SetAsNotReady();
+	SetAsNotReady(true);
 }
 
 
@@ -194,7 +195,7 @@ void ULobbyMenu::OnSelectLoadoutButtonClicked()
 	if(SelectLoadoutWindow != nullptr)
 		SelectLoadoutWindow->ShowPrimaryLoadoutWindow();
 
-	SetAsNotReady();
+	SetAsNotReady(true);
 }
 
 
@@ -209,7 +210,7 @@ void ULobbyMenu::OnOptionsButtonClicked()
 	if(OptionsWindow != nullptr)
 		OptionsWindow->ShowGameplaySettingsWindow();
 
-	SetAsNotReady();
+	SetAsNotReady(true);
 }
 
 
@@ -310,7 +311,7 @@ void ULobbyMenu::OnControlsButtonClicked()
 }
 
 
-void ULobbyMenu::SetAsReady()
+void ULobbyMenu::SetAsReady(bool bInformServer)
 {
 	if(bIsHost) return;
 	
@@ -320,12 +321,12 @@ void ULobbyMenu::SetAsReady()
 	if(ReadyStatusText != nullptr)
 		ReadyStatusText->SetText(FText::FromString("Status: Ready"));
 
-	if(LobbyPlayerController != nullptr)
+	if(bInformServer && LobbyPlayerController != nullptr)
 		LobbyPlayerController->UpdateStatus(true);
 }
 
 
-void ULobbyMenu::SetAsNotReady()
+void ULobbyMenu::SetAsNotReady(bool bInformServer)
 {
 	if(bIsHost) return;
 	
@@ -335,7 +336,7 @@ void ULobbyMenu::SetAsNotReady()
 	if(ReadyStatusText != nullptr)
 		ReadyStatusText->SetText(FText::FromString("Status: Not Ready"));
 
-	if(LobbyPlayerController != nullptr)
+	if(bInformServer && LobbyPlayerController != nullptr)
 		LobbyPlayerController->UpdateStatus(false);
 }
 
@@ -357,7 +358,9 @@ void ULobbyMenu::TryStartSession()
 
 	if(bCanStart && GameInstanceInterface != nullptr)
 	{
-		GameInstanceInterface->StartGame();
+		ALobbyGameMode* GameMode = Cast<ALobbyGameMode>(GetWorld()->GetAuthGameMode());
+		if(GameMode != nullptr)
+			GameMode->StartGame();
 	}
 }
 
@@ -437,6 +440,14 @@ void ULobbyMenu::UpdateAllPlayersInfo(const TArray<FLobbyPlayerInfo>& InLobbyPla
 				Player->SetPlayerNameAndAvatar(PlayerInfo.PlayerName, PlayerInfo.PlayerAvatarImage);
 				Player->SetPlayerStatus(PlayerInfo.bIsReady);
 				PlayerListScrollBox->AddChild(Player);
+			}
+
+			if(!bIsHost && PlayerInfo.PlayerID == GetSelfPlayerID())
+			{
+				if(PlayerInfo.bIsReady)
+					SetAsReady(false);
+				else
+					SetAsNotReady(false);
 			}
 		}
 
