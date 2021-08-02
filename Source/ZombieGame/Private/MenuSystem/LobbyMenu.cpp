@@ -221,10 +221,10 @@ void ULobbyMenu::OnExitLobbyButtonClicked()
 	{
 		if (World->IsServer())
 		{
-			AGameModeBase* GameMode = World->GetAuthGameMode();
+			ALobbyGameMode* GameMode = Cast<ALobbyGameMode>(World->GetAuthGameMode());
 			if (GameMode != nullptr)
 			{
-				GameMode->ReturnToMainMenuHost();
+				GameMode->ExitToMainMenu();
 			}
 		}
 		else

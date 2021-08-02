@@ -54,6 +54,8 @@ UZCustomGameInstance::UZCustomGameInstance(const FObjectInitializer& ObjectIniti
 	OnDestroySessionCompleteDelegate = FOnDestroySessionCompleteDelegate::CreateUObject(this, &UZCustomGameInstance::OnDestroySessionComplete);
 
 	bFindingSessions = false;
+	bShowErrorAfterMainMenuLoad = false;
+	MainMenuError.Empty();
 
 	AllGameModes.Add({"Free For All", "All players fight for themselves", "BP_GMFreeForAll.BP_GMFreeForAll_C"});
 	AllGameModes.Add({"Team DeathMatch", "Players divided into 2 teams", "BP_GMTeamDeathMatch.BP_GMTeamDeathMatch_C"});
@@ -163,6 +165,13 @@ void UZCustomGameInstance::LoadMainMenu()
 
 	MainMenu->Setup(this);
 	MainMenu->ShowMenu(true);
+
+	if(bShowErrorAfterMainMenuLoad)
+	{
+		TriggerError(MainMenuError);
+		bShowErrorAfterMainMenuLoad = false;
+		MainMenuError.Empty();
+	}
 
 	DestroySessionCaller();
 	
@@ -573,7 +582,11 @@ void UZCustomGameInstance::OnDestroySessionComplete(FName SessionName, bool Succ
 void UZCustomGameInstance::HandleNetworkFailure(UWorld* InWorld, UNetDriver* NetDriver, ENetworkFailure::Type FailureType,
 	const FString& ErrorString)
 {
-	TriggerError(FString::Printf(TEXT("Network Failure: %s"),*ErrorString));
+	if(!bShowErrorAfterMainMenuLoad)
+	{
+		bShowErrorAfterMainMenuLoad = true;
+		MainMenuError = FString::Printf(TEXT("Network Failure: %s"),*ErrorString);
+	}
 	UE_LOG(LogTemp, Warning, TEXT("Network Failure: %s"),*ErrorString);
 }
 
@@ -581,7 +594,11 @@ void UZCustomGameInstance::HandleNetworkFailure(UWorld* InWorld, UNetDriver* Net
 void UZCustomGameInstance::HandleTravelFailure(UWorld* InWorld, ETravelFailure::Type FailureType,
 	const FString& ErrorString)
 {
-	TriggerError(FString::Printf(TEXT("Travel Failure: %s"),*ErrorString));
+	if(!bShowErrorAfterMainMenuLoad)
+	{
+		bShowErrorAfterMainMenuLoad = true;
+		MainMenuError = FString::Printf(TEXT("Travel Failure: %s"),*ErrorString);
+	}
 	UE_LOG(LogTemp, Warning, TEXT("Travel Failure: %s"),*ErrorString);
 }
 
@@ -698,4 +715,11 @@ void UZCustomGameInstance::HideLoadingScreen()
 {
 	if(LoadingScreen != nullptr)
 		LoadingScreen->PlayFadeOutAnimation();
+}
+
+
+void UZCustomGameInstance::ShowErrorAfterMenuLoaded(const FString& Error)
+{
+	bShowErrorAfterMainMenuLoad = true;
+	MainMenuError = Error;
 }

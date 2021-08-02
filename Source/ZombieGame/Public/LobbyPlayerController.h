@@ -88,4 +88,10 @@ public:
 
 	UFUNCTION(Client, Reliable)
 	void Client_ShowLoadingScreen();
+
+	UFUNCTION(Client, Reliable)
+	void Client_KickedByServer();
+
+	UFUNCTION(Client, Reliable)
+	void Client_ServerShutdown();
 };

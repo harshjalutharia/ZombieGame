@@ -214,5 +214,18 @@ public:
 
 	void ShowLoadingScreen();
 	void HideLoadingScreen();
+
+	/*
+	 *Show errors after disconnect
+	 */
+
+private:
+
+	bool bShowErrorAfterMainMenuLoad;
+	FString MainMenuError;
+	
+public:
+	
+	void ShowErrorAfterMenuLoaded(const FString& Error);
 	
 };

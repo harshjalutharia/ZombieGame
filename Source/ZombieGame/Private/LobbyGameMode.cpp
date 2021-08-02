@@ -153,7 +153,7 @@ void ALobbyGameMode::KickPlayer(int32 KickPlayerID)
 	{
 		if(Player.Value.PlayerID == KickPlayerID)
 		{
-			GameSession->KickPlayer(Player.Key,FText::FromString("Kicked By Host"));
+			Player.Key->Client_KickedByServer();
 			break;
 		}
 	}
@@ -190,6 +190,19 @@ void ALobbyGameMode::StartGame()
 	{
 		GameInstance->StartGame();
 	}
+}
+
+
+void ALobbyGameMode::ExitToMainMenu()
+{
+	for(auto PC:ConnectedPlayers)
+	{
+		if(!PC->IsLocalController())
+		{
+			PC->Client_ServerShutdown();
+		}
+	}
+	ReturnToMainMenuHost();
 }
 
 

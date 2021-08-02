@@ -36,6 +36,8 @@ public:
 
 	void StartGame();
 
+	void ExitToMainMenu();
+
 private:
 
 	void NotifyClientsOfPlayerLeave(int32 LeavingPlayerID);

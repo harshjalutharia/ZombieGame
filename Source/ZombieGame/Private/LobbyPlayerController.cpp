@@ -228,6 +228,27 @@ void ALobbyPlayerController::Client_ShowLoadingScreen_Implementation()
 }
 
 
+void ALobbyPlayerController::Client_KickedByServer_Implementation()
+{
+	UZCustomGameInstance* GameInstance = Cast<UZCustomGameInstance>(GetGameInstance());
+	if(GameInstance != nullptr)
+	{
+		GameInstance->ShowErrorAfterMenuLoaded("You were kicked from the server");
+		ClientReturnToMainMenuWithTextReason(FText::FromString("You were kicked from the server"));
+	}
+}
+
+
+void ALobbyPlayerController::Client_ServerShutdown_Implementation()
+{
+	UZCustomGameInstance* GameInstance = Cast<UZCustomGameInstance>(GetGameInstance());
+	if(GameInstance != nullptr)
+	{
+		GameInstance->ShowErrorAfterMenuLoaded("Server has been shutdown");
+	}
+}
+
+
 void ALobbyPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
