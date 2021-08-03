@@ -123,15 +123,13 @@ void UFindGamesMenu::OnPopupJoinButtonClicked()
 
 void UFindGamesMenu::UpdateAllRows()
 {
-	if(SelectedIndex.IsSet() && ServerList != nullptr)
+	if(SelectedIndex.IsSet() && AllServerRows.Num() > 0)
 	{
-		for(int32 i = 0; i < ServerList->GetChildrenCount(); i++)
+		int32 i = 0;
+		for(auto& ServerRow : AllServerRows)
 		{
-			UServerRow* ServerRow = Cast<UServerRow>(ServerList->GetChildAt(i));
-			if(ServerRow != nullptr)
-			{
-				ServerRow->SetSelected(SelectedIndex.GetValue() == i);
-			}
+			ServerRow->SetSelected(SelectedIndex.GetValue() == i);
+			i++;
 		}
 	}
 }
@@ -192,6 +190,13 @@ void UFindGamesMenu::ClearServerList()
 		ServerList->ClearChildren();
 	SelectedIndex.Reset();
 	AllServerRows.Empty();
+
+	UServerRow* ServerHeader = CreateWidget<UServerRow>(this,ServerRowClass);
+	if(ServerHeader != nullptr)
+	{
+		ServerHeader->SetAsHeader();
+		ServerList->AddChild(ServerHeader);
+	}	
 
 	if(PasswordPopupUI != nullptr)
 		PasswordPopupUI->SetVisibility(ESlateVisibility::Hidden);

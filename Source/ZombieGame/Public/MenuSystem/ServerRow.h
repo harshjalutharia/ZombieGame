@@ -54,6 +54,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	UTexture2D* UnlockedImage;
 
+	UPROPERTY(BlueprintReadOnly)
+	bool bSelected;
+
+	UPROPERTY(BlueprintReadOnly)
+	bool bIsHeader;
+
 public:
 
 	void Setup(UFindGamesMenu* InParent, uint32 InIndex, FText InServerName, FString InPassword, FText InGameModeName, FText InMapName, uint8 InCurrentPlayers, uint8 InMaxPlayers);
@@ -64,10 +70,7 @@ public:
 
 	FString& GetPassword() { return Password; }
 
-protected:
-
-	UPROPERTY(BlueprintReadOnly)
-	bool bSelected;
+	void SetAsHeader();
 	
 private:
 

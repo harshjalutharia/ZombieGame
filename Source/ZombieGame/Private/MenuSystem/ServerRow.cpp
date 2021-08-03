@@ -13,6 +13,7 @@ void UServerRow::Setup(UFindGamesMenu* InParent, uint32 InIndex, FText InServerN
 	ParentMenu = InParent;
 	Index = InIndex;
 	Password = InPassword;
+	bIsHeader = false;
 
 	if(!ensure(SelectButton != nullptr)) return;
 	SelectButton->OnClicked.AddDynamic(this, &UServerRow::OnSelected);
@@ -47,6 +48,16 @@ void UServerRow::Setup(UFindGamesMenu* InParent, uint32 InIndex, FText InServerN
 void UServerRow::SetSelected(bool IsSelected)
 {
 	bSelected = IsSelected;
+}
+
+
+void UServerRow::SetAsHeader()
+{
+	bIsHeader = true;
+	if(SelectButton != nullptr)
+	{
+		SelectButton->SetIsEnabled(false);
+	}
 }
 
 
